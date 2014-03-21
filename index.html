@@ -12,18 +12,18 @@
     <link rel="meta" type="application/rdf+xml" title="Dublin" href="/dublin.rdf" />
     <link rel="canonical" href="http://gcode.ws/" />
 
-
     <link rel="stylesheet" type="text/css" href="css/cupertino/jquery-ui-1.9.0.custom.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="lib/codemirror.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="css/style.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="css/gCodeViewer.css" media="screen" />
+
     <script type="text/javascript" src="lib/jquery-1.8.2.js"></script>
     <script type="text/javascript" src="lib/jquery-ui-1.9.0.custom.js"></script>
-
     <script type="text/javascript" src="lib/codemirror.js"></script>
     <script type="text/javascript" src="lib/mode_gcode/gcode_mode.js"></script>
     <script type="text/javascript" src="lib/three.js"></script>
-    <script type="text/javascript" src="lib/bootstrap.js"></script>
+    <script type="text/javascript" src="lib/bootstrap.min.js"></script>
     <script type="text/javascript" src="lib/modernizr.custom.09684.js"></script>
     <script type="text/javascript" src="lib/TrackballControls.js"></script>
     <script type="text/javascript" src="lib/zlib.min.js"></script>
@@ -32,20 +32,6 @@
     <script type="text/javascript" src="js/renderer.js"></script>
     <script type="text/javascript" src="js/analyzer.js"></script>
     <script type="text/javascript" src="js/renderer3d.js"></script>
-
-    <script type="text/javascript">
-
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-38437619-1']);
-        _gaq.push(['_trackPageview']);
-
-        (function() {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
-
-    </script>
 
     <meta property="og:title" content="gCodeViewer - online gcode viewer and analyzer!" />
     <meta property="og:type" content="website" />
@@ -56,189 +42,99 @@
 
 </head>
 <body>
-<div id="fb-root"></div>
-<script type="text/javascript">(function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "//connect.facebook.net/ru_RU/all.js#xfbml=1&appId=122261684619414";
-    fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
 
-<div id="analysisModal" class="modal hide fade">
-    <div class="modal-header">
-        <h3>Running analysis....</h3>
-    </div>
-    <div class="modal-body">
-        <div class="progress" >
-            <div id="analysisProgress" class="bar" style="width: 0;"></div>
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">GCode Viewer</a>
         </div>
-    </div>
-    <div class="modal-footer">
-        <a href="#" class="btn disabled">Please wait for process to get finished</a>
-    </div>
-</div>
 
-<div class="navbar navbar-fixed-top">
-    <div class="navbar-inner">
-        <div class="container">
-            <ul class="nav">
-                <li >
-                    <a class="brand" href="#">GCode Viewer</a>
-                </li>
-            </ul>
-            <ul class="nav pull-right">
-                <li class="dropdown">
-                    <a href="#"
-                       class="dropdown-toggle"
-                       data-toggle="dropdown">
-                        Spread the word
-                        <b class="caret"></b>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li class="socials">
-                            <div class="g-plusone" data-annotation="inline" data-width="150"></div>
-                        </li>
-                        <li class="socials"><div class="fb-like" data-href="http://gcode.ws" data-send="false" data-layout="button_count" data-width="150" data-show-faces="true" data-action="recommend"></div></li>
-                        <li class="socials"><a href="https://twitter.com/share" class="twitter-share-button" data-url="http://gcode.ws" data-text="Check out a nice online gcode viewer!">Tweet</a>
-                            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
+        <ul class="nav navbar-nav" id="tab-nav">
+            <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
+            <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D</a></li>
+            <li><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> 3D</a></li>
+            <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode</a></li>
+            <li class="gcode-init">
+                <input type="file" id="file" name="files" style="display: none;" />
+                <div class="gcode-drop" id="drop_zone">
+                    <i class="fa fa-upload"></i> Drag GCode here
+                </div>
+                <div class="gcode-progress">
+                    <div class="progress">
+                        <div id="loadProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
+                    </div>
+                    <div class="progress">
+                        <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preferences</a></li>
+            <li class="dropdown">
+                <a href="#"
+                   class="dropdown-toggle"
+                   data-toggle="dropdown">
+                    Spread the word
+                    <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="socials">Facebook</li>
+                    <li class="socials">Google Plus</li>
+                    <li class="socials">Twitter</li>
+                </ul>
+            </li>
+        </ul>
     </div>
 </div>
 
 
-<div id="wrap" class="ui-widget ui-widget-content ui-corner-all">
-    <div id="control">
-        <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer"/>
+<div id="app">
+    <div id="control" style="display: none;">
+        <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
+        <div id="accordion2" class="panel-group">
 
-        <div id="accordion2" class="accordion">
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#fileAccordionTab">
-                        Select GCode file
-                    </a>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion2" href="#infoAccordionTab">
+                            Model info
+                        </a>
+                    </h4>
                 </div>
-                <div id="fileAccordionTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <input type="file" id="file" name="files" />
-                        <!--<form class="add-teacher" id="fAddTeacher" enctype="multipart/form-data" method="post" novalidate="novalidate">-->
-                        <!--<button id="selectFileButton">Select GCode File</button>-->
-                        <!--</form>-->
-                        <div id="drop_zone">Drop file here</div>
-                    </div>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#progressAccordionTab">
-                        Progress indicators
-                    </a>
-                </div>
-                <div id="progressAccordionTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <div id="progressBlock">
-                            <div class="progress" >
-                                <div id="loadProgress" class="bar" style="width: 0;"></div>
-                            </div>
-                            <div class="progress" >
-                                <div id="analyzeProgress" class="bar" style="width: 0;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#infoAccordionTab">
-                        Model info
-                    </a>
-                </div>
-                <div id="infoAccordionTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
+                <div id="infoAccordionTab" class="panel-collapse collapse in">
+                    <div class="panel-body">
                         <p id="list"></p>
                     </div>
                 </div>
             </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#layerAccordionTab">
-                        Layer Info
-                    </a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion2" href="#layerAccordionTab">
+                            Layer Info
+                        </a>
+                    </h4>
                 </div>
-                <div id="layerAccordionTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
+                <div id="layerAccordionTab" class="panel-collapse collapse in">
+                    <div class="panel-body">
                         <p id="layerInfo"></p>
                     </div>
                 </div>
             </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#options2DAccordionTab">
-                        2D Render options
-                    </a>
-                </div>
-                <div id="options2DAccordionTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <label>Speed display type: </label>
-                            <label for="speedDisplayRadio"><input type="radio" name="speedDisplay" id="speedDisplayRadio" value="1"  onclick="GCODE.ui.processOptions()" checked> mm/sec</label>
-                            <label for="exPerMMRadio"><input type="radio" name="speedDisplay" id="exPerMMRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm extrusion per mm move</label>
-                            <label for="volPerSecRadio"><input type="radio"  name="speedDisplay" id="volPerSecRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm^3/sec</label>
-                        <label for="showMovesCheckbox"><input type="checkbox" id="showMovesCheckbox" value="1"  onclick="GCODE.ui.processOptions()" checked> Show non-extrusion moves</label>
-                        <label for="showRetractsCheckbox"><input type="checkbox" id="showRetractsCheckbox" value="2" onclick="GCODE.ui.processOptions()" checked> Show retracts and restarts</label>
-                        <label for="moveModelCheckbox"><input type="checkbox" id="moveModelCheckbox" value="3"  onclick="GCODE.ui.processOptions()" checked> Move model to the center of the grid</label>
-                        <label for="differentiateColorsCheckbox"><input type="checkbox" id="differentiateColorsCheckbox" value="7"  onclick="GCODE.ui.processOptions()" checked> Show different speeds with different colors</label>
-                        <label for="thickExtrusionCheckbox"><input type="checkbox" id="thickExtrusionCheckbox" value="8"  onclick="GCODE.ui.processOptions()"> Emulate extrusion width</label>
-                        <label for="alphaCheckbox"><input type="checkbox" id="alphaCheckbox" value="10"  onclick="GCODE.ui.processOptions()" > Render lines slightly transparent</label>
-                        <!--<label for="widthModifier">Width modifier: <input type="text" value="2" id="widthModifier" onchange="GCODE.ui.processOptions()"/></label>-->
-                        <label for="showNextLayer"><input type="checkbox" id="showNextLayer" value="9"  onclick="GCODE.ui.processOptions()" > Show +1 layer</label>
-                    </div>
-                </div>
-            </div>
 
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#analyzeOptionsAccordioinTab">
-                        GCode analyzer options
-                    </a>
+            <div class="panel panel-default hide" id="errAnalyseTab">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
+                            Error Analysis
+                        </a>
+                    </h4>
                 </div>
-                <div id="analyzeOptionsAccordioinTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        These require re-analyzing file:<br />
-                        <label for="sortLayersCheckbox"><input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>Sort layers by Z</label>
-                        <label for="purgeEmptyLayersCheckbox"><input type="checkbox" id="purgeEmptyLayersCheckbox" value="5"  onclick="GCODE.ui.processOptions()" checked>Hide empty layers</label>
-                        <label for="showGCodeCheckbox"><input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>Show GCode in GCode tab (memory intensive!)</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#printerInfoAccordioinTab">
-                        Printer Info
-                    </a>
-                </div>
-                <div id="printerInfoAccordioinTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <label for="filamentDia">Plastic diameter: <input type="text" value="1.75" id="filamentDia" onchange="GCODE.ui.processOptions()"/></label>
-                        <label>Plastic type: </label>
-                            <label for="plasticABS"><input type="radio" name="radPlastic" id="plasticABS" value="ABS"  onclick="GCODE.ui.processOptions()" checked>ABS</label>
-                            <label for="plasticPLA"><input type="radio" name="radPlastic" id="plasticPLA" value="PLA"  onclick="GCODE.ui.processOptions()" >PLA</label>
-                        <label for="nozzleDia">Nozzle size: <input type="text" value="0.4" id="nozzleDia" onchange="GCODE.ui.processOptions()"/></label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-group hide" id="errAnalyseTab">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
-                        Error Analysis
-                    </a>
-                </div>
-                <div id="errorAnalysisAccordioinTab" class="accordion-body collapse">
-                    <div class="accordion-inner">
+                <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
+                    <div class="panel-body">
                         <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()"/>Run analysis</button>
                         <div id="analysisOptionsDiv" class="hide">
                             <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
@@ -250,20 +146,12 @@
 
         </div>
         <output id="errorList"></output>
-
-
     </div>
     <div id="gcode">
         <div id="tabs-min" class="tabbable">
-            <ul id="myTab" class="nav nav-tabs">
-                <li class=""><a href="#tab2d" data-toggle="tab">2D</a></li>
-                <li class=""><a href="#tab3d" data-toggle="tab">3D</a></li>
-                <li class=""><a href="#tabGCode" data-toggle="tab">GCode</a></li>
-                <li class="active"><a href="#tabAbout" data-toggle="tab">About</a></li>
-            </ul>
             <div class="tab-content">
                 <div class="tab-pane" id="tab2d">
-                    <canvas id="canvas" width="650" height="620"></canvas>
+                    <canvas id="canvas"></canvas>
                     <div id="slider-vertical"></div>
                     <div id="slider-horizontal"></div>
                 </div>
@@ -274,8 +162,8 @@
                     <div id="gCodeContainer"></div>
                 </div>
                 <div class="tab-pane active" id="tabAbout">
-                    <div class="aboutpage">
-                        <h1>gCodeViewer</h1>
+                    <div class="container">
+                        <h1 class="logo"><img src="img/logo.png" alt="GCode Viewer" /></h1>
                         <b>gCodeViewer</b> is a visual GCode visualizer, viewer and analyzer in your own browser! It works on any OS in almost any modern browser (chrome, ff, safari 6, opera, ie10 should work too). All you need to do - is drag your *.gcode file to the designated zone.<br /><br />
                         Current features include:<br />
                         <ul>
@@ -311,16 +199,192 @@
         </div>
     </div>
 </div>
-<script>
-    GCODE.ui.initHandlers();
-</script>
 
-<script type="text/javascript">
-    (function() {
-        var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-        po.src = 'https://apis.google.com/js/plusone.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-    })();
+<div id="status">
+    <div class="container-fluid">
+
+    </div>
+</div>
+
+<div class="modal fade" id="preferences-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel"><i class="fa fa-cog"></i> Preferences</h4>
+            </div>
+            <div class="modal-body">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Printer Info</div>
+                    <div class="panel-body">
+                        <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                                <label for="filamentDia" class="col-sm-3 control-label">Plastic diameter:</label>
+                                <div class="col-sm-9">
+                                    <input type="text" value="1.75" id="filamentDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Plastic type:</label>
+                                <div class="col-sm-9">
+                                    <div class="btn-group" data-toggle="buttons">
+                                        <label class="btn btn-default active">
+                                            <input type="radio" name="radPlastic" id="plasticABS" value="ABS" onclick="GCODE.ui.processOptions()" checked> ABS
+                                        </label>
+                                        <label class="btn btn-default">
+                                            <input type="radio" name="radPlastic" id="plasticPLA" value="PLA" onclick="GCODE.ui.processOptions()"> PLA
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="nozzleDia" class="col-sm-3 control-label">Nozzle size:</label>
+                                <div class="col-sm-9">
+                                    <input type="text" value="0.4" id="nozzleDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">2D Render options</div>
+                    <div class="panel-body">
+                        <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Speed display type: </label>
+                                <div class="col-sm-9">
+                                    <div class="btn-group" data-toggle="buttons">
+                                        <label class="btn btn-default active">
+                                            <input type="radio" name="speedDisplay" id="speedDisplayRadio" value="1"  onclick="GCODE.ui.processOptions()" checked> mm/sec
+                                        </label>
+                                        <label class="btn btn-default">
+                                            <input type="radio" name="speedDisplay" id="exPerMMRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm extrusion per mm move
+                                        </label>
+                                        <label class="btn btn-default">
+                                            <input type="radio"  name="speedDisplay" id="volPerSecRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm^3/sec
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">What to display:</label>
+                                <div class="col-sm-9">
+                                    <div class="checkbox">
+                                        <label for="showMovesCheckbox">
+                                            <input type="checkbox" id="showMovesCheckbox" value="1"  onclick="GCODE.ui.processOptions()" checked>
+                                            Show non-extrusion moves
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="showRetractsCheckbox">
+                                            <input type="checkbox" id="showRetractsCheckbox" value="2" onclick="GCODE.ui.processOptions()" checked>
+                                            Show retracts and restarts
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="differentiateColorsCheckbox">
+                                            <input type="checkbox" id="differentiateColorsCheckbox" value="7"  onclick="GCODE.ui.processOptions()" checked>
+                                            Show different speeds with different colors
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="showNextLayer">
+                                            <input type="checkbox" id="showNextLayer" value="9"  onclick="GCODE.ui.processOptions()" >
+                                            Show +1 layer
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Adjust display:</label>
+                                <div class="col-sm-9">
+                                    <div class="checkbox">
+                                        <label for="moveModelCheckbox">
+                                            <input type="checkbox" id="moveModelCheckbox" value="3"  onclick="GCODE.ui.processOptions()" checked>
+                                            Move model to the center of the grid
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="thickExtrusionCheckbox">
+                                            <input type="checkbox" id="thickExtrusionCheckbox" value="8"  onclick="GCODE.ui.processOptions()">
+                                            Emulate extrusion width
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="alphaCheckbox">
+                                            <input type="checkbox" id="alphaCheckbox" value="10"  onclick="GCODE.ui.processOptions()" >
+                                            Render lines slightly transparent
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">GCode analyzer options</div>
+                    <div class="panel-body">
+                        <div class="alert alert-warning">
+                            <strong><i class="fa fa-warning"></i> Attention:</strong>
+                            Changing these settings requires re-analyzing your GCode file.
+                        </div>
+                        <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Enhanced options:</label>
+                                <div class="col-sm-9">
+                                    <div class="checkbox">
+                                        <label for="sortLayersCheckbox">
+                                            <input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>
+                                            Sort layers by Z
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="purgeEmptyLayersCheckbox">
+                                            <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5"  onclick="GCODE.ui.processOptions()" checked>
+                                            Hide empty layers
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="showGCodeCheckbox">
+                                            <input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>
+                                            Show GCode in GCode tab (memory intensive!)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="analysisModal" class="modal hide fade">
+    <div class="modal-header">
+        <h3>Running analysis....</h3>
+    </div>
+    <div class="modal-body">
+        <div class="progress" >
+            <div id="analysisProgress" class="bar" style="width: 0;"></div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn disabled">Please wait for process to get finished</a>
+    </div>
+</div>
+
+<script>
+$(function() {
+    $("#canvas").attr("width", $("#gcode").css("width"));
+    $("#canvas").attr("height", $("#gcode").css("height"));
+    GCODE.ui.initHandlers();
+})
 </script>
 
 </body>
