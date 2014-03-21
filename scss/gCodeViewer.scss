@@ -1,0 +1,86 @@
+@import "compass";
+
+body,
+html {
+  color: #333;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  width: 100%;
+}
+
+.navbar li a i {
+  margin-right: 5px;
+}
+
+#app {
+  background-color: #FFF;
+  bottom: 0;
+  height: 100%;
+  left: 0;
+  margin: 0;
+  padding: 50px 0 50px 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  @include box-sizing(border-box);
+}
+
+#gcode {
+  background: #ffffff;
+  height: 100%;
+  margin-top: 0px;
+  width: 100%;
+  @include box-sizing(border-box);
+}
+
+#status {
+  background-color: #f8f8f8;
+  bottom: 0;
+  height: 50px;
+  left: 0;
+  padding: 10px 0px;
+  position: fixed;
+  right: 0;
+}
+
+.logo {
+  text-align: center;
+}
+
+.gcode-init {
+
+  padding: 0 10px;
+
+  .gcode-drop {
+    float: left;
+    line-height: 36px;
+    margin: 5px;
+    padding: 0px 5px;
+    border: 2px dashed #999;
+  }
+  .gcode-progress {
+    float: left;
+    height: 50px;
+    margin-left: 10px;
+    position: relative;
+    width: 100px;
+
+    .progress {
+      height: 15px;
+      left: 0;
+      margin-bottom: 0;
+      position: absolute;
+      width: 100%;
+      &:nth-child(1) { top: 5px; }
+      &:nth-child(2) { bottom: 5px; }
+
+      .progress-bar {
+        font-size: 10px;
+        line-height: 15px;
+      }
+    }
+  }
+}
