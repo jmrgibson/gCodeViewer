@@ -148,24 +148,60 @@ GCODE.ui = (function(){
     };
 
     var printModelInfo = function(){
-        var resultSet = [];
+        // get model info
         var modelInfo = GCODE.gCodeReader.getModelInfo();
 
-        resultSet.push("Model size is: " + modelInfo.modelSize.x.toFixed(2) + 'x' + modelInfo.modelSize.y.toFixed(2) + 'x' + modelInfo.modelSize.z.toFixed(2)+'mm<br>');
-        resultSet.push("Total filament used: " + modelInfo.totalFilament.toFixed(2) + "mm<br>");
-        resultSet.push("Total filament weight used: " + modelInfo.totalWeight.toFixed(2) + "grams<br>");
-        var i = 0, tmp = [];
-        for(var key in modelInfo.filamentByExtruder){
-            i++;
-            tmp.push("Filament for extruder '" + key + "': " + modelInfo.filamentByExtruder[key].toFixed(2) + "mm<br>");
+        // generate _template
+        var liHtml = '<li title="<%= tooltip %>" data-toggle="tooltip" data-placement="top">';
+        liHtml += '<i class="fa fa-<%= icon %>"></i> <%= metric %>';
+        liHtml += '</li>';
+        var li = _.template(liHtml);
+
+        // compile metrics
+        var metricsHtml = "";
+        metricsHtml += li({
+            "tooltip": "Model size",
+            "icon": "arrows",
+            "metric": modelInfo.modelSize.x.toFixed(2) + ' x ' + modelInfo.modelSize.y.toFixed(2) + ' x ' + modelInfo.modelSize.z.toFixed(2) + ' mm'
+        });
+        metricsHtml += li({
+            "tooltip": "Total filament used",
+            "icon": "arrows-h",
+            "metric": modelInfo.totalFilament.toFixed(2) + "mm"
+        });
+        if(modelInfo.filamentByExtruder.length > 1){
+            for(var key in modelInfo.filamentByExtruder){
+
+                metricsHtml += li({
+                    "tooltip": "Filament for extruder '" + key + "'",
+                    "icon": "arrows-h",
+                    "metric": modelInfo.filamentByExtruder[key].toFixed(2) + "mm"
+                });
+            }
         }
-        if(i>1){
-            resultSet.push(tmp.join(''));
-        }
-        resultSet.push("Estimated print time: " + parseInt(parseFloat(modelInfo.printTime)/60/60) + ":" + parseInt((parseFloat(modelInfo.printTime)/60)%60) + ":" + parseInt(parseFloat(modelInfo.printTime)%60) + "<br>");
-        resultSet.push("Estimated layer height: " + modelInfo.layerHeight.toFixed(2) + "mm<br>");
-        resultSet.push("Layer count: " + modelInfo.layerCnt.toFixed(0) + "printed, " + modelInfo.layerTotal.toFixed(0) + 'visited<br>');
-        document.getElementById('list').innerHTML =  resultSet.join('');
+        metricsHtml += li({
+            "tooltip": "Total filament weight used",
+            "icon": "dashboard",
+            "metric": modelInfo.totalWeight.toFixed(2) + "grams"
+        });
+        metricsHtml += li({
+            "tooltip": "Estimated print time",
+            "icon": "clock-o",
+            "metric": parseInt(parseFloat(modelInfo.printTime) / 60 / 60) + ":" + parseInt((parseFloat(modelInfo.printTime) / 60) % 60) + ":" + parseInt(parseFloat(modelInfo.printTime) % 60)
+        });
+        metricsHtml += li({
+            "tooltip": "Estimated layer height",
+            "icon": "arrows-v",
+            "metric": modelInfo.layerHeight.toFixed(2) + "mm"
+        });
+        metricsHtml += li({
+            "tooltip": "Layer count",
+            "icon": "bars",
+            "metric": modelInfo.layerCnt.toFixed(0) + "printed, " + modelInfo.layerTotal.toFixed(0) + 'visited'
+        });
+
+        // display metrics and add event listeners for tooltips
+        $("#metrics-list").html(metricsHtml).find("li").tooltip();
     };
 
     var handleFileSelect = function(evt) {
