@@ -305,7 +305,7 @@ GCODE.ui = (function(){
             }
         }
         // function to go one layer down and adjusting the slider value
-        var oneLayerDownifPossible = function() {
+        var oneLayerDownIfPossible = function() {
             if (sliderVer.slider('getValue') > 0) {
                 sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
                 onLayerChange(sliderVer.slider('getValue'));
