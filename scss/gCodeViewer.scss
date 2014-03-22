@@ -34,6 +34,7 @@ html {
   height: 100%;
   margin-top: 0px;
   width: 100%;
+  position: relative;
   @include box-sizing(border-box);
 }
 
@@ -93,5 +94,78 @@ html {
     margin-right: 20px;
     line-height: 30px;
   }
+}
 
+.toolbar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+
+  &.toolbar-right {
+    left: auto;
+    right: 60px;
+  }
+}
+
+.scrollbar {
+  $size: 40px;
+
+  bottom: 20px;
+  position: absolute;
+  right: 10px;
+  top: 20px;
+  width: $size;
+
+  .scrollbar-group {
+    height: 100%;
+    position: relative;
+  }
+  .scrollbar-control {
+    background-color: #FFF;
+    border: 1px solid #CCCCCC;
+    bottom: $size;
+    padding: 20px 0px;
+    position: absolute;
+    text-align: center;
+    top: $size;
+    width: $size;
+    @include box-shadow(rgba(0,0,0,0.075) 0px 1px 1px 0px inset);
+  }
+  .scrollbar-plus, .scrollbar-minus {
+    background-color: #EEEEEE;
+    border: 1px solid #CCCCCC;
+    font-size: 14px;
+    height: $size;
+    line-height: $size;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: $size;
+  }
+  .scrollbar-plus {
+    border-bottom: none;
+    @include border-top-left-radius(4px);
+    @include border-top-right-radius(4px);
+  }
+  .scrollbar-minus {
+    border-top: none;
+    bottom: 0;
+    top: auto;
+    @include border-bottom-left-radius(4px);
+    @include border-bottom-right-radius(4px);
+  }
+
+  // bootstrap-slider scrollbar styling
+  .slider-track, .slider-selection {
+    background: #EEE;
+    @include box-shadow(rgba(0,0,0,0.075) 0px 1px 1px 0px inset);
+  }
+  .slider-handle {
+    background: #428bca;
+    @include opacity(1);
+    @include box-shadow(none);
+  }
+  .slider-disabled .slider-handle {
+    background: #CCC;
+  }
 }

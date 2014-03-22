@@ -246,64 +246,84 @@ GCODE.ui = (function(){
     };
 
     var initSliders = function(){
-//        var prevX=0;
-//        var prevY=0;
+        // TODO: fix horizontal slider
         var handle;
-        sliderVer =  $( "#slider-vertical" );
-        sliderHor = $( "#slider-horizontal" );
+        // sliderHor = $( "#slider-horizontal" );
 
         var onLayerChange = function(val){
             var progress = GCODE.renderer.getLayerNumSegments(val)-1;
             GCODE.renderer.render(val,0, progress);
-            sliderHor.slider({max: progress, values: [0,progress]});
+            // sliderHor.slider({max: progress, values: [0,progress]});
             setLinesColor(false); //clear current selection
-            gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
+            // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
+            gCodeLines = GCODE.gCodeReader.getGCodeLines(val, 0, 1);
             setLinesColor(true); // highlight lines
             printLayerInfo(val);
         };
 
+        sliderVer.slider("destroy");
+        sliderVer = $("#layer-scrollbar");
+        var maxLayer = GCODE.renderer.getModelNumLayers() - 1;
         sliderVer.slider({
+            reversed : true,
             orientation: "vertical",
-            range: "min",
-            min: 0,
-            max: GCODE.renderer.getModelNumLayers()-1,
+            tooltip: "hide",
+            enabled: true,
             value: 0,
-            slide: function( event, ui ) {
-                onLayerChange(ui.value);
+            min: 0,
+            max: maxLayer,
+            step: 1
+        });
+        sliderVer.on("slide", function( event ) {
+            if (Object.prototype.toString.call( event.value ) === "[object Number]") {
+                onLayerChange(event.value);
             }
         });
 
         //this stops slider reacting to arrow keys, since we do it below manually
-        $( "#slider-vertical").find(".ui-slider-handle" ).unbind('keydown');
+        // $( "#slider-vertical").find(".ui-slider-handle" ).unbind('keydown');
 
-        sliderHor.slider({
-            orientation: "horizontal",
-            range: "min",
-            min: 0,
-            max: GCODE.renderer.getLayerNumSegments(0)-1,
-            values: [0,GCODE.renderer.getLayerNumSegments(0)-1],
-            slide: function( event, ui ) {
-                setLinesColor(false); //clear current selection
-                gCodeLines = GCODE.gCodeReader.getGCodeLines(sliderVer.slider("value"),ui.values[0], ui.values[1]);
-                setLinesColor(true); // highlight lines
-                GCODE.renderer.render(sliderVer.slider("value"), ui.values[0], ui.values[1]);
-            }
-        });
+//        sliderHor.slider({
+//            orientation: "horizontal",
+//            range: "min",
+//            min: 0,
+//            max: GCODE.renderer.getLayerNumSegments(0)-1,
+//            values: [0,GCODE.renderer.getLayerNumSegments(0)-1],
+//            slide: function( event, ui ) {
+//                setLinesColor(false); //clear current selection
+//                gCodeLines = GCODE.gCodeReader.getGCodeLines(sliderVer.slider("value"),ui.values[0], ui.values[1]);
+//                setLinesColor(true); // highlight lines
+//                GCODE.renderer.render(sliderVer.slider("value"), ui.values[0], ui.values[1]);
+//            }
+//        });
 
-        window.onkeydown = function (event){
-            if(event.keyCode === 38 || event.keyCode === 33){
-                if(sliderVer.slider('value') < sliderVer.slider('option', 'max')){
-                    sliderVer.slider('value', sliderVer.slider('value')+1);
-                    onLayerChange(sliderVer.slider('value'));
-                }
-            }else if(event.keyCode === 40 || event.keyCode === 34){
-                if(sliderVer.slider('value') > 0){
-                    sliderVer.slider('value', sliderVer.slider('value')-1);
-                    onLayerChange(sliderVer.slider('value'));
-                }
+        // function to go one layer up and adjusting the slider value
+        var oneLayerUpIfPossible = function() {
+            if (sliderVer.slider('getValue') < maxLayer) {
+                sliderVer.slider('setValue', sliderVer.slider('getValue') + 1);
+                onLayerChange(sliderVer.slider('getValue'));
             }
-            event.stopPropagation()
         }
+        // function to go one layer down and adjusting the slider value
+        var oneLayerDownifPossible = function() {
+            if (sliderVer.slider('getValue') > 0) {
+                sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
+                onLayerChange(sliderVer.slider('getValue'));
+            }
+        }
+
+        // bind arrow keys to change layer
+        window.onkeydown = function (event) {
+            if (event.keyCode === 38 || event.keyCode === 33) {
+                oneLayerUpIfPossible();
+            } else if (event.keyCode === 40 || event.keyCode === 34) {
+                oneLayerDownIfPossible();
+            }
+            return event.stopPropagation()
+        }
+        // bind slider control buttons to change layer
+        $("#tab2d .scrollbar-plus").mousedown(oneLayerUpIfPossible);
+        $("#tab2d .scrollbar-minus").mousedown(oneLayerDownIfPossible);
     };
 
     var processMessage = function(e){
@@ -384,29 +404,43 @@ GCODE.ui = (function(){
     return {
         worker: undefined,
         initHandlers: function(){
+            // check browser requirements
             var capabilitiesResult = checkCapabilities();
             if(!capabilitiesResult){
                 return;
             }
+
+            // initialize GCode drag&drop
             var dropZone = document.getElementById('drop_zone');
             dropZone.addEventListener('dragover', handleDragOver, false);
             dropZone.addEventListener('drop', handleFileSelect, false);
-
             document.getElementById('file').addEventListener('change', handleFileSelect, false);
 
+            // initialize progress bars
             setProgress('loadProgress', 0);
             setProgress('analyzeProgress', 0);
 
-            $(".collapse").collapse({parent: '#accordion2'});
+            // initilize 2d preview slider
+            sliderVer = $("#layer-scrollbar");
+            sliderVer.slider({
+                reversed : true,
+                orientation: "vertical",
+                tooltip: "hide",
+                min: 0,
+                max: 1,
+                step: 1,
+                value: 0,
+                enabled: false
+            });
 
-            $('#myTab').find('a[href="#tab3d"]').click(function (e) {
+            // initialize navigation listeners
+            $('#tab-nav').find('a[href="#tab3d"]').click(function (e) {
                 e.preventDefault();
                 console.log("Switching to 3d mode");
                 $(this).tab('show');
                 GCODE.renderer3d.doRender();
             });
-
-            $('#myTab').find('a[href="#tabGCode"]').click(function (e) {
+            $('#tab-nav').find('a[href="#tabGCode"]').click(function (e) {
                 e.preventDefault();
                 console.log("Switching to GCode preview mode");
                 $(this).tab('show');
@@ -417,21 +451,22 @@ GCODE.ui = (function(){
                 myCodeMirror.focus();
             });
 
+            // initialize worker
             this.worker = new Worker('js/Worker.js');
-
             this.worker.addEventListener('message', processMessage, false);
 
+            // initial rendering to display grid
             GCODE.ui.processOptions();
             GCODE.renderer.render(0,0);
 
             console.log("Application initialized");
 
+            // codemirror
             myCodeMirror = new CodeMirror( document.getElementById('gCodeContainer'), {
                 lineNumbers: true,
                 gutters: ['CodeMirror-linenumbers']
             });
-            myCodeMirror.setSize("680","640");
-//            console.log(myCodeMirror);
+            myCodeMirror.setSize("100%","100%");
             chooseAccordion('fileAccordionTab');
 
             (function() {
