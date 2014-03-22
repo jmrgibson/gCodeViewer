@@ -448,8 +448,9 @@ GCODE.ui = (function(){
                 printLayerInfo(0);
                 chooseAccordion('infoAccordionTab');
                 GCODE.ui.updateOptions();
-                $('#myTab').find('a[href="#tab2d"]').tab('show');
+                $('#tab-nav').find('a[href="#tab2d"]').click();
                 $('#runAnalysisButton').removeClass('disabled');
+                $("#layer-info").show();
                 break;
             case 'returnLayer':
                 GCODE.gCodeReader.processLayerFromWorker(data.msg);
