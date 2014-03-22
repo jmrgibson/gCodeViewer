@@ -97,13 +97,53 @@ html {
 }
 
 .toolbar {
+  left: 20px;
   position: absolute;
   top: 20px;
-  left: 20px;
 
   &.toolbar-right {
     left: auto;
     right: 60px;
+  }
+
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+
+    li i {
+      text-align: center;
+      width: 15px;
+      margin-right: 5px;
+    }
+  }
+
+  strong {
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  .colorbox {
+    $size: 20px;
+
+    height: $size;
+    margin-bottom: 2px;
+
+    span {
+      font-size: 12px;
+      line-height: $size;
+    }
+    .color {
+      float: left;
+      display: inline-block;
+      height: 100%;
+      margin-right: 5px;
+      width: $size;
+    }
+
+    &.colorbox-rounded .color {
+      @include border-radius($size);
+    }
   }
 }
 
