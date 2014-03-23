@@ -137,6 +137,9 @@ GCODE.renderer = (function(){
             throw "exception";
         }
 
+        $("#canvas").attr("width", $("#gcode").css("width"));
+        $("#canvas").attr("height", $("#gcode").css("height"));
+
         ctx = canvas.getContext('2d'); // Получаем 2D контекст
         ctxHeight = canvas.height;
         ctxWidth = canvas.width;
