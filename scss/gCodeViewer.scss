@@ -10,6 +10,9 @@ html {
   position: relative;
   width: 100%;
 }
+body {
+  padding-bottom: 50px;
+}
 
 .navbar li a i {
   margin-right: 5px;
@@ -38,22 +41,11 @@ html {
   @include box-sizing(border-box);
 }
 
-#status {
-  background-color: #f8f8f8;
-  bottom: 0;
-  height: 50px;
-  left: 0;
-  padding: 10px 0px;
-  position: fixed;
-  right: 0;
-}
-
 .logo {
   text-align: center;
 }
 
 .gcode-init {
-
   padding: 0 10px;
 
   .gcode-drop {
@@ -87,15 +79,28 @@ html {
   }
 }
 
-#status ul.metrics {
-  list-style-type: none;
-  li {
-    float: left;
-    margin-right: 20px;
-    line-height: 30px;
+// displays model information
+#status {
+  background-color: #f8f8f8;
+  bottom: 0;
+  height: 50px;
+  left: 0;
+  padding: 10px 0px;
+  position: fixed;
+  right: 0;
+  z-index: 10;
+
+  ul.metrics {
+    list-style-type: none;
+    li {
+      float: left;
+      margin-right: 20px;
+      line-height: 30px;
+    }
   }
 }
 
+// displays layer information
 .toolbar {
   left: 20px;
   position: absolute;
@@ -147,6 +152,7 @@ html {
   }
 }
 
+// used to change layers in 2D view
 .scrollbar {
   $size: 40px;
 
