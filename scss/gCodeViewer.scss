@@ -215,3 +215,25 @@ body {
     background: #CCC;
   }
 }
+
+#mobile-notification {
+  position: fixed;
+  z-index: 2000;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #EEE;
+
+  .modal-body {
+    font-size: 20px;
+    text-align: center;
+
+    i.fa-desktop {
+      font-size: 130px;
+    }
+    p {
+      margin: 50px 0px;
+    }
+  }
+}
