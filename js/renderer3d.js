@@ -8,7 +8,6 @@ GCODE.renderer3d = (function(){
     var modelLoaded=false;
     var model;
     var prevX=0, prevY= 0, prevZ=0;
-    var sliderHor, sliderVer;
     var object;
     var geometry;
 
@@ -32,6 +31,13 @@ GCODE.renderer3d = (function(){
         colorMove: 0x00ff00,
         rendererType: "webgl"
     };
+
+    var adjustSize = function(newWidth, newHeight) {
+        WIDTH = newWidth;
+        HEIGHT = newHeight;
+        ASPECT = WIDTH / HEIGHT;
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
+    }
 
     var render = function(){
         controls.update();
@@ -138,6 +144,8 @@ GCODE.renderer3d = (function(){
 // ***** PUBLIC *******
     return {
         init: function(){
+            adjustSize(parseInt($("#gcode").css("width")), parseInt($("#gcode").css("height")));
+
             modelLoaded = false;
             if(renderOptions["rendererType"]=="webgl")renderer = new THREE.WebGLRenderer({clearColor:0xffffff, clearAlpha: 1});
             else if(renderOptions["rendererType"]=="canvas")renderer = new THREE.CanvasRenderer({clearColor:0xffffff, clearAlpha: 1});

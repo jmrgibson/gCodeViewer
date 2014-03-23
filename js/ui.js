@@ -579,6 +579,17 @@ GCODE.ui = (function(){
                 $('#errAnalyseTab').removeClass('hide');
             }
 
+            // react to browser resize
+            var resizeTimeout = null;
+            $(window).resize(function() {
+                if (resizeTimeout !== null) {
+                    clearTimeout(resizeTimeout);
+                }
+                resizeTimeout = window.setTimeout(function() {
+                    $('#tab-nav .active.clickOnResize a').click();
+                }, 300);
+            });
+
         },
 
         processOptions: function(){

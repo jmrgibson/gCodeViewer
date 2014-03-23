@@ -52,7 +52,7 @@
         <ul class="nav navbar-nav" id="tab-nav">
             <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
             <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D</a></li>
-            <li><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> 3D</a></li>
+            <li class="clickOnResize"><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> 3D</a></li>
             <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode</a></li>
             <li class="gcode-init">
                 <input type="file" id="file" name="files" style="display: none;" />
@@ -378,8 +378,6 @@
 
 <script>
 $(function() {
-    $("#canvas").attr("width", $("#gcode").css("width"));
-    $("#canvas").attr("height", $("#gcode").css("height"));
     GCODE.ui.initHandlers();
 })
 </script>
