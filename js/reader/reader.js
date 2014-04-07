@@ -4,8 +4,9 @@
  * Time: 7:31 AM
  */
 
-GCODE.gCodeReader = (function(){
+GCODE.reader = (function(fileReader){
 // ***** PRIVATE ******
+    var name;
     var gcode, lines;
     var z_heights = {};
     var model = [];
@@ -177,38 +178,40 @@ GCODE.gCodeReader = (function(){
             slicer = 'makerbot';
             getParamsFromMiracleGrue(gcode);
         }
-
     }
 
-
-
-// ***** PUBLIC *******
-    return {
-
-        loadFile: function(reader){
-//            console.log("loadFile");
-            model = [];
-            z_heights = [];
-            detectSlicer(reader.target.result);
-            lines = reader.target.result.split(/\n/);
-            reader.target.result = null;
+    /**
+     * Loads a GCode file from a FileReader
+     *
+     * @param {FileReader} reader
+     */
+    var load = function(reader){
+        name = reader.name;
+        model = [];
+        z_heights = [];
+        detectSlicer(reader.target.result);
+        lines = reader.target.result.split(/\n/);
+        reader.target.result = null;
 //            prepareGCode();
 
-            GCODE.ui.worker.postMessage({
-                    "cmd":"parseGCode",
-                    "msg":{
-                        gcode: lines,
-                        options: {
-                            firstReport: 5
-                        }
+        GCODE.ui.worker.postMessage({
+                "cmd":"parseGCode",
+                "msg":{
+                    gcode: lines,
+                    options: {
+                        firstReport: 5
                     }
                 }
-            );
-            delete lines;
+            }
+        );
+        delete lines;
+    };
 
+    // invoke constructor
+    load(fileReader);
 
-
-        },
+    // ***** PUBLIC *******
+    return {
         setOption: function(options){
             for(var opt in options){
                 gCodeOptions[opt] = options[opt];
@@ -309,6 +312,15 @@ GCODE.gCodeReader = (function(){
         },
         getOptions: function(){
             return gCodeOptions;
+        },
+
+        /**
+         * Returns the original file name of the GCode file.
+         *
+         * @returns {string}
+         */
+        getName: function () {
+            return name;
         }
     }
-}());
+});

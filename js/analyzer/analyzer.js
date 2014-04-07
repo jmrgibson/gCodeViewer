@@ -279,4 +279,4 @@ GCODE.analyzer = (function(){
             }
         }
     }
-}());
+});

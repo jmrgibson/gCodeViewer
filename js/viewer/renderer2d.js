@@ -505,4 +505,4 @@ GCODE.renderer = (function(){
         }
 
 }
-}());
+});

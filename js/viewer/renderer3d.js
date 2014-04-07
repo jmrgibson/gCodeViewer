@@ -210,5 +210,5 @@ GCODE.renderer3d = (function(){
 //            renderer.render(scene, camera);
         }
     }
-}());
+});
 
