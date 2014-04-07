@@ -9,17 +9,7 @@ var GCODE = {};
 GCODE.ui = (function(){
     var reader;
     var myCodeMirror;
-    var sliderVer;
-    var sliderHor;
-    var gCodeLines = {first: 0, last: 0};
     var showGCode = false;
-    var displayType = {speed: 1, expermm: 2, volpersec: 3};
-
-    // _templates
-    var liHtml = '<li title="<%= tooltip %>" data-toggle="tooltip" data-placement="top">';
-    liHtml += '<i class="fa fa-<%= icon %>"></i> <%= metric %>';
-    liHtml += '</li>';
-    var li = _.template(liHtml);
 
 //    var worker;
 
@@ -31,223 +21,6 @@ GCODE.ui = (function(){
     var chooseAccordion = function(id){
 //        debugger;
         $('#'+id).collapse("show");
-    };
-
-    var setLinesColor = function(toggle){
-        for(var i=gCodeLines.first;i<gCodeLines.last; i++){
-            if(toggle){
-                myCodeMirror.setLineClass(Number(i), null, "activeline");
-            }else{
-                myCodeMirror.setLineClass(Number(i), null, null);
-            }
-        }
-    };
-
-    var prepareMoveSpeeds = function(z, renderOptions) {
-        var layerSpeeds = GCODE.gCodeReader.getModelInfo().speedsByLayer;
-        var colorLen = renderOptions['colorLineLen'];
-        var speedIndex = 0;
-        var output = [];
-
-        if (typeof(layerSpeeds['move'][z]) === 'undefined') {
-            return output;
-        }
-        for (var i = 0; i < layerSpeeds['move'][z].length; i++) {
-            if (typeof(layerSpeeds['move'][z][i]) === 'undefined') {
-                continue;
-            }
-            speedIndex = i;
-            if (speedIndex > colorLen - 1) {
-                speedIndex = speedIndex % (colorLen - 1);
-            }
-            output.push({
-                color: renderOptions['colorMove'],
-                speed: (parseFloat(layerSpeeds['move'][z][i]) / 60).toFixed(2) + "mm/s"
-            });
-        }
-        return output;
-    }
-
-    var prepareRetractSpeeds = function (z, renderOptions) {
-        var layerSpeeds = GCODE.gCodeReader.getModelInfo().speedsByLayer;
-        var colorLen = renderOptions['colorLineLen'];
-        var speedIndex = 0;
-        var output = [];
-
-        if (typeof(layerSpeeds['retract'][z]) === 'undefined') {
-            return output;
-        }
-        for (var i = 0; i < layerSpeeds['retract'][z].length; i++) {
-            if (typeof(layerSpeeds['retract'][z][i]) === 'undefined') {
-                continue;
-            }
-            speedIndex = i;
-            if (speedIndex > colorLen - 1) {
-                speedIndex = speedIndex % (colorLen - 1);
-            }
-            output.push({
-                retract: renderOptions['colorRetract'],
-                restart: renderOptions['colorRestart'],
-                speed: (parseFloat(layerSpeeds['retract'][z][i]) / 60).toFixed(2) + "mm/s"
-            });
-        }
-        return output;
-    }
-
-    var prepareExPerSec = function (z, renderOptions) {
-        var layerSpeeds = GCODE.gCodeReader.getModelInfo().speedsByLayer;
-        var colors = renderOptions["colorLine"];
-        var colorLen = renderOptions['colorLineLen'];
-        var speedIndex = 0;
-        var output = [];
-
-        for (var i = 0; i < layerSpeeds['extrude'][z].length; i++) {
-            if (typeof(layerSpeeds['extrude'][z][i]) === 'undefined') {
-                continue;
-            }
-            speedIndex = i;
-            if (speedIndex > colorLen - 1) {
-                speedIndex = speedIndex % (colorLen - 1);
-            }
-            output.push({
-                color: colors[speedIndex],
-                speed: (parseFloat(layerSpeeds['extrude'][z][i]) / 60).toFixed(2) + "mm/s"
-            });
-        }
-        return output;
-    }
-
-    var prepareExPerMMInfo = function (z, renderOptions) {
-        var layerSpeeds = GCODE.gCodeReader.getModelInfo().volSpeedsByLayer;
-        var colors = renderOptions["colorLine"];
-        var colorLen = renderOptions['colorLineLen'];
-        var speedIndex = 0;
-        var output = [];
-
-        for (var i = 0; i < layerSpeeds[z].length; i++) {
-            if (typeof(layerSpeeds[z][i]) === 'undefined') {
-                continue;
-            }
-            speedIndex = i;
-            if (speedIndex > colorLen - 1) {
-                speedIndex = speedIndex % (colorLen - 1);
-            }
-            output.push({
-                color: colors[speedIndex],
-                speed: (parseFloat(layerSpeeds[z][i])).toFixed(3) + "mm/mm"
-            });
-        }
-        return output;
-    }
-
-    var prepareVolPerSecInfo = function (z, renderOptions) {
-        var layerSpeeds = GCODE.gCodeReader.getModelInfo().extrusionSpeedsByLayer;
-        var gCodeOptions = GCODE.gCodeReader.getOptions();
-        var colors = renderOptions["colorLine"];
-        var colorLen = renderOptions['colorLineLen'];
-        var speedIndex = 0;
-        var output = [];
-
-        for (var i = 0; i < layerSpeeds[z].length; i++) {
-            if (typeof(layerSpeeds[z][i]) === 'undefined') {
-                continue;
-            }
-            speedIndex = i;
-            if (speedIndex > colorLen - 1) {
-                speedIndex = speedIndex % (colorLen - 1);
-            }
-            output.push({
-                color: colors[speedIndex],
-                speed: (parseFloat(layerSpeeds[z][i] * 3.141 * gCodeOptions['filamentDia'] / 10 * gCodeOptions['filamentDia'] / 10 / 4)).toFixed(3) + "mm^3/sec"
-            });
-        }
-        return output;
-    }
-
-
-    var printLayerInfo = function(layerNum){
-        var z = GCODE.renderer.getZ(layerNum);
-        var segments = GCODE.renderer.getLayerNumSegments(layerNum);
-        var renderOptions = GCODE.renderer.getOptions();
-        var filament = GCODE.gCodeReader.getLayerFilament(z);
-        var output = [];
-
-        // current layer
-        $("#layer-info .curLayer").text(layerNum);
-
-        // layer metrics
-        var metrics = "";
-        metrics += li({
-            tooltip: "Layer height",
-            icon: "arrows-v",
-            metric: z + "mm"
-        });
-        metrics += li({
-            tooltip: "GCODE commands in layer",
-            icon: "code",
-            metric: segments
-        });
-        metrics += li({
-            tooltip: "Filament used by layer",
-            icon: "dashboard",
-            metric: filament.toFixed(2) + "mm"
-        });
-        metrics += li({
-            tooltip: "Print time for layer",
-            icon: "clock-o",
-            metric: parseFloat(GCODE.gCodeReader.getModelInfo().printTimeByLayer[z]).toFixed(1) + "sec"
-        });
-        $("#layer-info .metrics").html(metrics).find("li").tooltip();
-
-        // common speed preparation dependencies and templates
-        var z = GCODE.renderer.getZ(layerNum);
-        var renderOptions = GCODE.renderer.getOptions();
-        var colorBox = _.template('<div class="colorbox"><div class="color" style="background-color: <%= color %>"></div><span><%= speed %></span></div>');
-
-        // extrusion speeds
-        var exSpeed;
-        if (renderOptions['speedDisplayType'] === displayType.speed) {
-            exSpeed = prepareExPerSec(z, renderOptions);
-        } else if (renderOptions['speedDisplayType'] === displayType.expermm) {
-            exSpeed = prepareExPerMMInfo(z, renderOptions);
-        } else if (renderOptions['speedDisplayType'] === displayType.volpersec) {
-            exSpeed = prepareVolPerSecInfo(z, renderOptions);
-        }
-        var exSpeedHtml = "";
-        exSpeed = _.sortBy(exSpeed, function(el) {
-            return el.speed;
-        });
-        _.each(exSpeed, function(el) {
-            exSpeedHtml += colorBox(el);
-        });
-        $("#layer-info .extrudeSpeeds").html(exSpeedHtml);
-
-        // move speeds
-        var moveSpeed = prepareMoveSpeeds(z, renderOptions);
-        var moveSpeedHtml = "";
-        moveSpeed = _.sortBy(moveSpeed, function(el) {
-            return el.speed;
-        });
-        _.each(moveSpeed, function(el) {
-            moveSpeedHtml += colorBox(el);
-        });
-        $("#layer-info .moveSpeeds").html(moveSpeedHtml);
-
-        // retract speeds
-        var colorBoxRetract = _.template('<div class="colorbox colorbox-rounded"><div class="color" style="background-color: <%= retract %>"></div><div class="color" style="background-color: <%= restart %>"></div><span><%= speed %></span></div>');
-        var retractSpeed = prepareRetractSpeeds(z, renderOptions);
-        console.log(retractSpeed);
-        var retractSpeedHtml = "";
-        retractSpeed = _.sortBy(retractSpeed, function(el) {
-            return el.speed;
-        });
-        _.each(retractSpeed, function(el) {
-            retractSpeedHtml += colorBoxRetract(el);
-        });
-        $("#layer-info .retractSpeeds").html(retractSpeedHtml);
-
-        $('#layerInfo').html(output.join('<br>'));
-//        chooseAccordion('layerAccordionTab');
     };
 
     var printModelInfo = function(){
@@ -342,89 +115,6 @@ GCODE.ui = (function(){
         evt.target.dropEffect = 'copy'; // Explicitly show this is a copy.
     };
 
-    var initSliders = function(){
-        // TODO: fix horizontal slider
-        var handle;
-        // sliderHor = $( "#slider-horizontal" );
-
-        var onLayerChange = function(val){
-            var progress = GCODE.renderer.getLayerNumSegments(val)-1;
-            GCODE.renderer.render(val,0, progress);
-            // sliderHor.slider({max: progress, values: [0,progress]});
-            setLinesColor(false); //clear current selection
-            // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
-            gCodeLines = GCODE.gCodeReader.getGCodeLines(val, 0, 1);
-            setLinesColor(true); // highlight lines
-            printLayerInfo(val);
-        };
-
-        var maxLayer = GCODE.renderer.getModelNumLayers() - 1;
-        $("#layer-info .maxLayer").text(maxLayer);
-
-        sliderVer.slider("destroy");
-        sliderVer = $("#layer-scrollbar");
-        sliderVer.slider({
-            reversed : true,
-            orientation: "vertical",
-            tooltip: "hide",
-            enabled: true,
-            value: 0,
-            min: 0,
-            max: maxLayer,
-            step: 1
-        });
-        sliderVer.on("slide", function( event ) {
-            if (Object.prototype.toString.call( event.value ) === "[object Number]") {
-                onLayerChange(event.value);
-            }
-        });
-
-        //this stops slider reacting to arrow keys, since we do it below manually
-        // $( "#slider-vertical").find(".ui-slider-handle" ).unbind('keydown');
-
-//        sliderHor.slider({
-//            orientation: "horizontal",
-//            range: "min",
-//            min: 0,
-//            max: GCODE.renderer.getLayerNumSegments(0)-1,
-//            values: [0,GCODE.renderer.getLayerNumSegments(0)-1],
-//            slide: function( event, ui ) {
-//                setLinesColor(false); //clear current selection
-//                gCodeLines = GCODE.gCodeReader.getGCodeLines(sliderVer.slider("value"),ui.values[0], ui.values[1]);
-//                setLinesColor(true); // highlight lines
-//                GCODE.renderer.render(sliderVer.slider("value"), ui.values[0], ui.values[1]);
-//            }
-//        });
-
-        // function to go one layer up and adjusting the slider value
-        var oneLayerUpIfPossible = function() {
-            if (sliderVer.slider('getValue') < maxLayer) {
-                sliderVer.slider('setValue', sliderVer.slider('getValue') + 1);
-                onLayerChange(sliderVer.slider('getValue'));
-            }
-        }
-        // function to go one layer down and adjusting the slider value
-        var oneLayerDownIfPossible = function() {
-            if (sliderVer.slider('getValue') > 0) {
-                sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
-                onLayerChange(sliderVer.slider('getValue'));
-            }
-        }
-
-        // bind arrow keys to change layer
-        window.onkeydown = function (event) {
-            if (event.keyCode === 38 || event.keyCode === 33) {
-                oneLayerUpIfPossible();
-            } else if (event.keyCode === 40 || event.keyCode === 34) {
-                oneLayerDownIfPossible();
-            }
-            return event.stopPropagation()
-        }
-        // bind slider control buttons to change layer
-        $("#tab2d .scrollbar-plus").mousedown(oneLayerUpIfPossible);
-        $("#tab2d .scrollbar-minus").mousedown(oneLayerDownIfPossible);
-    };
-
     var processMessage = function(e){
         var data = e.data;
         switch (data.cmd) {
@@ -468,7 +158,13 @@ GCODE.ui = (function(){
         }
     };
 
-    var checkCapabilities = function(){
+
+    /**
+     * Checks whether the current browser supports all technical requirements to display the GCode viewer
+     *
+     * @returns {boolean} True if all requirements are met.
+     */
+    var checkCapabilities = function () {
         var warnings = [];
         var fatal = [];
 
@@ -476,24 +172,25 @@ GCODE.ui = (function(){
             return !!(window.File && window.FileList && window.FileReader);
         });
 
-        if(!Modernizr.canvas)fatal.push("<li>Your browser doesn't seem to support HTML5 Canvas, this application won't work without it.</li>");
-        if(!Modernizr.filereader)fatal.push("<li>Your browser doesn't seem to support HTML5 File API, this application won't work without it.</li>");
-        if(!Modernizr.webworkers)fatal.push("<li>Your browser doesn't seem to support HTML5 Web Workers, this application won't work without it.</li>");
-        if(!Modernizr.svg)fatal.push("<li>Your browser doesn't seem to support HTML5 SVG, this application won't work without it.</li>");
+        if (!Modernizr.canvas)fatal.push("<li>Your browser doesn't seem to support HTML5 Canvas, this application won't work without it.</li>");
+        if (!Modernizr.filereader)fatal.push("<li>Your browser doesn't seem to support HTML5 File API, this application won't work without it.</li>");
+        if (!Modernizr.webworkers)fatal.push("<li>Your browser doesn't seem to support HTML5 Web Workers, this application won't work without it.</li>");
+        if (!Modernizr.svg)fatal.push("<li>Your browser doesn't seem to support HTML5 SVG, this application won't work without it.</li>");
 
-        if(fatal.length>0){
+        if (fatal.length > 0) {
             document.getElementById('errorList').innerHTML = '<ul>' + fatal.join('') + '</ul>';
             console.log("Initialization failed: unsupported browser.");
             return false;
         }
 
-        if(!Modernizr.webgl){
+        if (!Modernizr.webgl) {
             warnings.push("<li>Your browser doesn't seem to support HTML5 Web GL, 3d mode is not recommended, going to be SLOW!</li>");
             GCODE.renderer3d.setOption({rendererType: "canvas"});
         }
-        if(!Modernizr.draganddrop)warnings.push("<li>Your browser doesn't seem to support HTML5 Drag'n'Drop, Drop area will not work.</li>");
+        if (!Modernizr.draganddrop)warnings.push("<li>Your browser doesn't seem to support HTML5 Drag'n'Drop, Drop area will not work.</li>");
 
-        if(warnings.length>0){
+        if (warnings.length > 0) {
+            // TODO: improve
             document.getElementById('errorList').innerHTML = '<ul>' + warnings.join('') + '</ul>';
             console.log("Initialization succeeded with warnings.")
         }
