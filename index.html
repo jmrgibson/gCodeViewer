@@ -27,11 +27,21 @@
     <script type="text/javascript" src="lib/TrackballControls.js"></script>
     <script type="text/javascript" src="lib/zlib.min.js"></script>
     <script type="text/javascript" src="lib/underscore.min.js"></script>
-    <script type="text/javascript" src="js/viewer/ui.js"></script>
+    <script type="text/javascript" src="lib/signals.min.js"></script>
+
+
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/app/events.js"></script>
+
     <script type="text/javascript" src="js/reader/reader.js"></script>
+    <script type="text/javascript" src="js/reader/repository.js"></script>
+
+    <script type="text/javascript" src="js/viewer/_ui.js"></script>
+    <script type="text/javascript" src="js/viewer/view.js"></script>
     <script type="text/javascript" src="js/viewer/renderer2d.js"></script>
-    <script type="text/javascript" src="js/analyzer/analyzer.js"></script>
     <script type="text/javascript" src="js/viewer/renderer3d.js"></script>
+
+    <script type="text/javascript" src="js/analyzer/analyzer.js"></script>
 
     <meta property="og:title" content="gCodeViewer - online gcode viewer and analyzer!" />
     <meta property="og:type" content="website" />
@@ -395,7 +405,7 @@
 
 <script>
 $(function() {
-    GCODE.ui.initHandlers();
+    GCODE.app.init();
 })
 </script>
 

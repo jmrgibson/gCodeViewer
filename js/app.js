@@ -4,45 +4,54 @@
  * Time: 5:54 PM
  */
 
+var GCODE = {};
+
 GCODE.app = (function () {
+
+    /**
+     * Handles all events of the GCODE app.
+     *
+     * @type {GCODE.events}
+     */
+    var events;
 
     /**
      * Holds all loaded GCodes.
      *
-     * @type GCODE.repository
+     * @type {GCODE.repository}
      */
-    var repository = new GCODE.repository();
+    var repository;
 
     /**
      * Holds all loaded views.
      *
-     * @type GCODE.view[]
+     * @type {GCODE.view[]}
      */
     var views = [];
 
     /**
      * Creates a full GCode viewer within the given DOM element. The DOM element has to be empty.
      *
-     * @param name the name to identify the viewer
+     * @param {string} name the name to identify the viewer
      * @param domRoot the DOM root element
      */
     var createView = function (name, domRoot) {
-
+        views[name] = new GCODE.view(domRoot);
     };
 
     /**
      * Removes the given view. The DOM element to which the view belonged to can safely be removed after calling this method.
      *
-     * @param name the name of the view
+     * @param {string} name the name of the view
      */
     var removeView = function (name) {
-
+        delete views[name];
     };
 
     /**
      * Displays the given error message to the user.
      *
-     * @param message the error message to display
+     * @param {string} message the error message to display
      */
     var handleError = function (message) {
         // TODO: display error message in a user friendly way
@@ -53,6 +62,15 @@ GCODE.app = (function () {
 
     // ***** PUBLIC *******
     return {
+
+        /**
+         * Initializes the GCode Viewer application
+         */
+        init: function() {
+            events = new GCODE.events();
+            repository = new GCODE.repository();
+            createView("default", $("#gcode"));
+        },
 
         /**
          * Loads (and parses) the given GCode from the reader
