@@ -72,46 +72,7 @@ GCODE.ui = (function(){
         $("#metrics-list").html(metricsHtml).find("li").tooltip();
     };
 
-    var handleFileSelect = function(evt) {
-//        console.log("handleFileSelect");
-        evt.stopPropagation();
-        evt.preventDefault();
 
-        var files = evt.dataTransfer?evt.dataTransfer.files:evt.target.files; // FileList object.
-
-        var output = [];
-        for (var i = 0, f; f = files[i]; i++) {
-            if(f.name.toLowerCase().match(/^.*\.(?:gcode|g|txt|gco)$/)){
-                output.push('<li>File extensions suggests GCODE</li>');
-            }else{
-                output.push('<li><strong>You should only upload *.gcode files! I will not work with this one!</strong></li>');
-                document.getElementById('errorList').innerHTML = '<ul>' + output.join('') + '</ul>';
-                return;
-            }
-
-            reader = new FileReader();
-            reader.onload = function(theFile){
-                chooseAccordion('progressAccordionTab');
-                setProgress('loadProgress', 0);
-                setProgress('analyzeProgress', 0);
-//                myCodeMirror.setValue(theFile.target.result);
-                GCODE.gCodeReader.loadFile(theFile);
-                if(showGCode){
-                    myCodeMirror.setValue(theFile.target.result);
-                }else{
-                    myCodeMirror.setValue("GCode view is disabled. You can enable it in 'GCode analyzer options' section.")
-                }
-
-            };
-            reader.readAsText(f);
-        }
-    };
-
-    var handleDragOver = function(evt) {
-        evt.stopPropagation();
-        evt.preventDefault();
-        evt.target.dropEffect = 'copy'; // Explicitly show this is a copy.
-    };
 
     var processMessage = function(e){
         var data = e.data;
@@ -169,11 +130,7 @@ GCODE.ui = (function(){
                 return;
             }
 
-            // initialize GCode drag&drop
-            var dropZone = document.getElementById('drop_zone');
-            dropZone.addEventListener('dragover', handleDragOver, false);
-            dropZone.addEventListener('drop', handleFileSelect, false);
-            document.getElementById('file').addEventListener('change', handleFileSelect, false);
+
 
             // initialize progress bars
             setProgress('loadProgress', 0);

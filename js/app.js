@@ -16,6 +16,13 @@ GCODE.app = (function () {
     var events;
 
     /**
+     * Holds the gCodeViewer UI logic
+     *
+     * @type {GCODE.ui}
+     */
+    var ui;
+
+    /**
      * Holds all loaded GCodes.
      *
      * @type {GCODE.repository}
@@ -68,6 +75,7 @@ GCODE.app = (function () {
          */
         init: function() {
             events = new GCODE.events();
+            ui = new GCODE.ui();
             repository = new GCODE.repository();
             createView("default", $("#gcode"));
         },
