@@ -4,7 +4,13 @@
  * Time: 7:45 AM
  */
 
-GCODE.ui = (function (eventManager) {
+GCODE.ui = (function (app, eventManager) {
+
+    /**
+     * Holds the GCode application
+     * @type {GCODE.app}
+     */
+    var app = app;
 
     /**
      * GCode event manager
@@ -13,38 +19,157 @@ GCODE.ui = (function (eventManager) {
     var events = eventManager;
 
     /**
+     * Worker used to process GCode files
+     */
+    var worker;
+
+    /**
+     * Dispalys a notification message.
+     *
+     * @param {string} message the message to display
+     * @param {string} title
+     * @param {string} severity
+     * @param {boolean} sticky
+     * @private
+     */
+    var _notify = function (message, title, severity, sticky) {
+        var msg;
+        if (title == null) {
+            msg = message;
+        } else {
+            msg = {
+                title: title,
+                message: message
+            }
+        }
+        $.growl(msg, {
+            type: severity,
+            position: { from: "bottom", align: "right" },
+            delay: (sticky != null && sticky) ? 0 : 5000
+        });
+    };
+
+    /**
      * Contains a set of notification helpers.
      */
     var notify = {
-        _notify: function (message, title, severity, sticky) {
-            var msg;
-            if (title == null) {
-                msg = message;
-            } else {
-                msg = {
-                    title: title,
-                    message: message
-                }
-            }
-            $.growl(msg, {
-                type: severity,
-                position: { from: "bottom", align: "right" },
-                delay: (sticky != null && sticky) ? 0 : 5000
-            });
-        },
+
+        /**
+         * Display info notification
+         *
+         * @param {string} message The actual notification message
+         * @param {string} title [Optional] A title for the notification
+         * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
+         */
         info: function (message, title, sticky) {
-            this._notify(message, title, "info", sticky);
+            _notify(message, title, "info", sticky);
         },
+
+        /**
+         * Display warning notification
+         *
+         * @param {string} message The actual notification message
+         * @param {string} title [Optional] A title for the notification
+         * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
+         */
         warning: function (message, title, sticky) {
-            this._notify(message, title, "warning", sticky);
+            _notify(message, title, "warning", sticky);
         },
+
+        /**
+         * Display error notification
+         *
+         * @param {string} message The actual notification message
+         * @param {string} title [Optional] A title for the notification
+         * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
+         */
         error: function (message, title, sticky) {
-            this._notify(message, title, "danger", sticky);
+            _notify(message, title, "danger", sticky);
         },
+
+        /**
+         * Display success notification
+         *
+         * @param {string} message The actual notification message
+         * @param {string} title [Optional] A title for the notification
+         * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
+         */
         success: function (message, title, sticky) {
-            this._notify(message, title, "success", sticky);
+            _notify(message, title, "success", sticky);
         }
     }
+
+    /**
+     * Listener waiting for messages from the worker. Will forward the messages to the event manager.
+     *
+     * @param e event message
+     */
+    var workerMessageListener = function (e) {
+        var data = e.data;
+        switch (data.cmd) {
+            case 'returnModel':
+                events.process.returnModel.dispatch();
+                break;
+            case 'analyzeDone':
+                events.process.analyzeDone.dispatch(data.msg);
+                break;
+
+            case 'returnLayer':
+                events.process.returnLayer.dispatch(data.msg);
+                break;
+
+            case 'returnMultiLayer':
+                events.process.returnMultiLayer.dispatch(data.msg);
+                break;
+
+            case "analyzeProgress":
+                events.process.analyzeProgress.dispatch(data.msg);
+                break;
+
+            default:
+                console.log("default msg received" + data.cmd);
+        }
+    };
+
+    // add default UI listeners
+    events.process.returnModel.add(function () {
+        progress.set(progress.load, 100);
+        notify.info("GCode has been loaded");
+    });
+    events.process.analyzeDone.add(function (data) {
+        progress.set(progress.analyze, 100);
+        notify.info("GCode has been analyzed and is ready to be displayed");
+        // TODO: move to view
+//        initSliders();
+//        printModelInfo();
+//        printLayerInfo(0);
+//        chooseAccordion('infoAccordionTab');
+//        GCODE.ui.updateOptions();
+//        $('#tab-nav').find('a[href="#tab2d"]').click();
+//        $('#runAnalysisButton').removeClass('disabled');
+//        $("#layer-info").show();
+    });
+    events.process.returnLayer.add(function (data) {
+        progress.set(progress.load, data.progress);
+    });
+    events.process.returnMultiLayer.add(function (data) {
+        progress.set(progress.load, data.progress);
+    });
+    events.process.analyzeProgress.add(function (data) {
+        progress.set(progress.analyze, data.progress);
+    });
+    events.process.toWorker.add(function (cmd) {
+        worker.postMessage(cmd);
+    });
+
+    /**
+     * Initializes the worker
+     */
+    var initWorker = function () {
+        worker = new Worker('js/reader/worker.js');
+        worker.addEventListener('message', workerMessageListener, false);
+    }
+
 
     /**
      * Checks whether the current browser supports all technical requirements to display the GCode viewer
@@ -88,6 +213,86 @@ GCODE.ui = (function (eventManager) {
         return true;
     };
 
+    /**
+     * Control progress bar
+     */
+    var progress = {
+        /** ID of load progress bar */
+        load: "loadProgress",
+        /** ID of analyze progress bar */
+        analyze: "analyzeProgress",
+
+        /**
+         * Sets the progress bar to a certain value.
+         *
+         * @param {string} id Progress bar id
+         * @param {float} progress the actual progress
+         */
+        set: function (id, progress) {
+            $('#' + id).width(parseInt(progress) + '%').text(parseInt(progress) + '%');
+        },
+
+        /**
+         * Resets both progress bars to zero.
+         */
+        reset: function () {
+            this.set(progress.load, 0);
+            this.set(progress.analyze, 0);
+        }
+    }
+
+    /**
+     * Handler used to load a new GCode file from the file upload.
+     *
+     * @param evt
+     */
+    var handleFileSelect = function (evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        /** @var files FileList */
+        var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
+
+        var output = [];
+        for (var i = 0, f; f = files[i]; i++) {
+            if (f.name.toLowerCase().match(/^.*\.(?:gcode|g|txt|gco)$/)) {
+                notify.success('Starting to process the uploaded GCode file.');
+            } else {
+                notify.error('You should only upload *.gcode files! I will not work with this one!');
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function (theFile) {
+                progress.reset();
+                app.loadGCode(theFile);
+            };
+            reader.readAsText(f);
+        }
+    };
+
+    /**
+     * File select drag over event handler
+     *
+     * @param evt drag event
+     */
+    var handleFileSelectDragOver = function (evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.target.dropEffect = 'copy'; // Explicitly show this is a copy.
+    };
+
+    /**
+     * File select UI initialization
+     */
+    var initFileSelect = function () {
+        // initialize GCode drag&drop
+        var dropZone = $('#drop_zone');
+        dropZone[0].addEventListener('dragover', handleFileSelectDragOver, false);
+        dropZone[0].addEventListener('drop', handleFileSelect, false);
+        $('#file').bind('change', handleFileSelect, false);
+    }
+
 
     /**
      * Initialize UI.
@@ -95,49 +300,15 @@ GCODE.ui = (function (eventManager) {
     var init = function () {
         checkCapabilities();
         initFileSelect();
+        progress.reset();
+        initWorker();
     }
     init();
 
     return {
         /**
-         * Contains helpers to display notifications.
+         * @var {notify}
          */
-        notify: {
-            /**
-             * Display info notification
-             *
-             * @param {string} message The actual notification message
-             * @param {string} title [Optional] A title for the notification
-             * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
-             */
-            info: notify.info,
-
-            /**
-             * Display success notification
-             *
-             * @param {string} message The actual notification message
-             * @param {string} title [Optional] A title for the notification
-             * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
-             */
-            success: notify.success,
-
-            /**
-             * Display warning notification
-             *
-             * @param {string} message The actual notification message
-             * @param {string} title [Optional] A title for the notification
-             * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
-             */
-            warning: notify.warning,
-
-            /**
-             * Display error notification
-             *
-             * @param {string} message The actual notification message
-             * @param {string} title [Optional] A title for the notification
-             * @param {boolean} sticky [Optional] A sticky notification will not automatically disappear. Default is false.
-             */
-            error: notify.error
-        }
+        notify: notify
     };
 });

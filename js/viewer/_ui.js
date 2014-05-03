@@ -11,11 +11,6 @@ GCODE.ui = (function(){
 
 //    var worker;
 
-    var setProgress = function(id, progress){
-        $('#'+id).width(parseInt(progress)+'%').text(parseInt(progress)+'%');
-//        $('#'+id);
-    };
-
     var chooseAccordion = function(id){
 //        debugger;
         $('#'+id).collapse("show");
@@ -74,55 +69,7 @@ GCODE.ui = (function(){
 
 
 
-    var processMessage = function(e){
-        var data = e.data;
-        switch (data.cmd) {
-            case 'returnModel':
-                setProgress('loadProgress', 100);
-                GCODE.ui.worker.postMessage({
-                        "cmd":"analyzeModel",
-                        "msg":{
-                        }
-                    }
-                );
-                break;
-            case 'analyzeDone':
-//                var resultSet = [];
-
-                setProgress('analyzeProgress',100);
-                GCODE.gCodeReader.processAnalyzeModelDone(data.msg);
-                GCODE.gCodeReader.passDataToRenderer();
-                initSliders();
-                printModelInfo();
-                printLayerInfo(0);
-                chooseAccordion('infoAccordionTab');
-                GCODE.ui.updateOptions();
-                $('#tab-nav').find('a[href="#tab2d"]').click();
-                $('#runAnalysisButton').removeClass('disabled');
-                $("#layer-info").show();
-                break;
-            case 'returnLayer':
-                GCODE.gCodeReader.processLayerFromWorker(data.msg);
-                setProgress('loadProgress',data.msg.progress);
-                break;
-            case 'returnMultiLayer':
-                GCODE.gCodeReader.processMultiLayerFromWorker(data.msg);
-                setProgress('loadProgress',data.msg.progress);
-                break;
-            case "analyzeProgress":
-                setProgress('analyzeProgress',data.msg.progress);
-                break;
-            default:
-                console.log("default msg received" + data.cmd);
-        }
-    };
-
-
-
-
-
     return {
-        worker: undefined,
         initHandlers: function(){
             // check browser requirements
             var capabilitiesResult = checkCapabilities();
@@ -166,10 +113,6 @@ GCODE.ui = (function(){
 //                myCodeMirror.setSelection({line:Number(gCodeLines.first),ch:0},{line:Number(gCodeLines.last),ch:0});
                 myCodeMirror.focus();
             });
-
-            // initialize worker
-            this.worker = new Worker('js/Worker.js');
-            this.worker.addEventListener('message', processMessage, false);
 
             // initial rendering to display grid
             GCODE.ui.processOptions();

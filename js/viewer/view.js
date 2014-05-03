@@ -393,6 +393,13 @@ GCODE.view = (function (domRoot) {
          */
         "load": function (reader) {
             gcode = reader;
+
+            // TODO: set CodeMirror to gCode file contents
+//            if (showGCode) {
+//                myCodeMirror.setValue(theFile.target.result);
+//            } else {
+//                myCodeMirror.setValue("GCode view is disabled. You can enable it in 'GCode analyzer options' section.")
+//            }
         }
     }
 });

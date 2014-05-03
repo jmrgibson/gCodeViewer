@@ -4,8 +4,8 @@
  * Time: 7:31 AM
  */
 
-GCODE.reader = (function(fileReader){
-// ***** PRIVATE ******
+GCODE.reader = (function(fileReader, eventManager){
+    // ***** PRIVATE ******
     var name;
     var gcode, lines;
     var z_heights = {};
@@ -37,6 +37,12 @@ GCODE.reader = (function(fileReader){
         filamentDia: 1.75,
         nozzleDia: 0.4
     };
+
+    /**
+     * Holds the event manager
+     * @type {GCODE.events}
+     */
+    var events = eventManager;
 
     var prepareGCode = function(){
         if(!lines)return;
@@ -180,6 +186,99 @@ GCODE.reader = (function(fileReader){
         }
     }
 
+    var processAnalyzeModelDone = function(msg){
+        min = msg.min;
+        max = msg.max;
+        modelSize = msg.modelSize;
+        totalFilament = msg.totalFilament;
+        filamentByLayer = msg.filamentByLayer;
+        filamentByExtruder = msg.filamentByExtruder;
+        speeds = msg.speeds;
+        speedsByLayer = msg.speedsByLayer;
+        printTime = msg.printTime;
+        printTimeByLayer = msg.printTimeByLayer;
+        layerHeight = msg.layerHeight;
+        layerCnt = msg.layerCnt;
+        layerTotal = msg.layerTotal;
+        volSpeeds = msg.volSpeeds;
+        volSpeedsByLayer = msg.volSpeedsByLayer;
+        extrusionSpeeds = msg.extrusionSpeeds;
+        extrusionSpeedsByLayer = msg.extrusionSpeedsByLayer;
+
+        var density = 1;
+        if(gCodeOptions['filamentType'] === 'ABS') {
+            density = 1.04;
+        }else if(gCodeOptions['filamentType'] === 'PLA') {
+            density = 1.24;
+        }
+        totalWeight = density*3.141*gCodeOptions['filamentDia']/10*gCodeOptions['filamentDia']/10/4*totalFilament/10;
+
+        gCodeOptions['wh'] = parseFloat(gCodeOptions['nozzleDia'])/parseFloat(layerHeight);
+        if(slicer === 'Slic3r' || slicer === 'cura'){
+            // slic3r stores actual nozzle diameter, but extrusion is usually slightly thicker, here we compensate for that
+            // kissslicer stores actual extrusion width - so no need for that.
+            gCodeOptions['wh'] = gCodeOptions['wh']*1.1;
+        }
+    };
+
+    var passDataToRenderer = function() {
+        if (gCodeOptions["sortLayers"]) {
+            sortLayers();
+        }
+        if (gCodeOptions["purgeEmptyLayers"]) {
+            purgeLayers();
+        }
+        // TODO: pass to view
+        GCODE.renderer.doRender(model, 0);
+        GCODE.renderer3d.setModel(model);
+    };
+
+    var processLayerFromWorker = function(msg) {
+        model[msg.layerNum] = msg.cmds;
+        z_heights[msg.zHeightObject.zValue] = msg.zHeightObject.layer;
+    };
+
+    var processMultiLayerFromWorker = function(msg) {
+        for(var i=0;i<msg.layerNum.length;i++){
+            model[msg.layerNum[i]] = msg.model[msg.layerNum[i]];
+            z_heights[msg.zHeightObject.zValue[i]] = msg.layerNum[i];
+        }
+    };
+
+    /**
+     * Event listeners for worker communication
+     */
+    var handlers = {
+        returnModel: function() {
+            events.process.toWorker.dispatch({
+                "cmd": "analyzeModel",
+                "msg": { }
+            });
+        },
+        analyzeDone: function(data) {
+            processAnalyzeModelDone(data);
+            passDataToRenderer();
+
+            // unregister listeners
+            events.process.returnModel.remove(this.returnModel);
+            events.process.analyzeDone.remove(this.analyzeDone);
+            events.process.returnLayer.remove(this.returnLayer);
+            events.process.returnMultiLayer.remove(this.returnMultiLayer);
+        },
+        returnLayer: function(data) {
+            processLayerFromWorker(data);
+        },
+        returnMultiLayer: function(data) {
+            processMultiLayerFromWorker(data);
+        }
+    }
+
+    // register listeners to event manager
+    events.process.returnModel.add(handlers.returnModel);
+    events.process.analyzeDone.add(handlers.analyzeDone);
+    events.process.returnLayer.add(handlers.returnLayer);
+    events.process.returnMultiLayer.add(handlers.returnMultiLayer);
+
     /**
      * Loads a GCode file from a FileReader
      *
@@ -194,16 +293,15 @@ GCODE.reader = (function(fileReader){
         reader.target.result = null;
 //            prepareGCode();
 
-        GCODE.ui.worker.postMessage({
-                "cmd":"parseGCode",
-                "msg":{
-                    gcode: lines,
-                    options: {
-                        firstReport: 5
-                    }
+        events.process.toWorker.dispatch({
+            "cmd":"parseGCode",
+            "msg":{
+                gcode: lines,
+                options: {
+                    firstReport: 5
                 }
             }
-        );
+        });
         delete lines;
     };
 
@@ -215,67 +313,6 @@ GCODE.reader = (function(fileReader){
         setOption: function(options){
             for(var opt in options){
                 gCodeOptions[opt] = options[opt];
-            }
-        },
-        passDataToRenderer: function(){
-//                        console.log(model);
-            if(gCodeOptions["sortLayers"])sortLayers();
-//            console.log(model);
-            if(gCodeOptions["purgeEmptyLayers"])purgeLayers();
-//            console.log(model);
-            GCODE.renderer.doRender(model, 0);
-            GCODE.renderer3d.setModel(model);
-
-        },
-        processLayerFromWorker: function(msg){
-//            var cmds = msg.cmds;
-//            var layerNum = msg.layerNum;
-//            var zHeightObject = msg.zHeightObject;
-//            var isEmpty = msg.isEmpty;
-//            console.log(zHeightObject);
-            model[msg.layerNum] = msg.cmds;
-            z_heights[msg.zHeightObject.zValue] = msg.zHeightObject.layer;
-//            GCODE.renderer.doRender(model, msg.layerNum);
-        },
-        processMultiLayerFromWorker: function(msg){
-            for(var i=0;i<msg.layerNum.length;i++){
-                model[msg.layerNum[i]] = msg.model[msg.layerNum[i]];
-                z_heights[msg.zHeightObject.zValue[i]] = msg.layerNum[i];
-            }
-//            console.log(model);
-        },
-        processAnalyzeModelDone: function(msg){
-            min = msg.min;
-            max = msg.max;
-            modelSize = msg.modelSize;
-            totalFilament = msg.totalFilament;
-            filamentByLayer = msg.filamentByLayer;
-            filamentByExtruder = msg.filamentByExtruder;
-            speeds = msg.speeds;
-            speedsByLayer = msg.speedsByLayer;
-            printTime = msg.printTime;
-            printTimeByLayer = msg.printTimeByLayer;
-            layerHeight = msg.layerHeight;
-            layerCnt = msg.layerCnt;
-            layerTotal = msg.layerTotal;
-            volSpeeds = msg.volSpeeds;
-            volSpeedsByLayer = msg.volSpeedsByLayer;
-            extrusionSpeeds = msg.extrusionSpeeds;
-            extrusionSpeedsByLayer = msg.extrusionSpeedsByLayer;
-
-            var density = 1;
-            if(gCodeOptions['filamentType'] === 'ABS') {
-                density = 1.04;
-            }else if(gCodeOptions['filamentType'] === 'PLA') {
-                density = 1.24;
-            }
-            totalWeight = density*3.141*gCodeOptions['filamentDia']/10*gCodeOptions['filamentDia']/10/4*totalFilament/10;
-
-            gCodeOptions['wh'] = parseFloat(gCodeOptions['nozzleDia'])/parseFloat(layerHeight);
-            if(slicer === 'Slic3r' || slicer === 'cura'){
-                // slic3r stores actual nozzle diameter, but extrusion is usually slightly thicker, here we compensate for that
-                // kissslicer stores actual extrusion width - so no need for that.
-                gCodeOptions['wh'] = gCodeOptions['wh']*1.1;
             }
         },
         getLayerFilament: function(z){

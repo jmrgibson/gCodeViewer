@@ -61,9 +61,8 @@ GCODE.app = (function () {
      * @param {string} message the error message to display
      */
     var handleError = function (message) {
-        // TODO: display error message in a user friendly way
         console.log(message);
-        alert(message);
+        ui.notify.error(message);
     }
 
 
@@ -75,7 +74,7 @@ GCODE.app = (function () {
          */
         init: function() {
             events = new GCODE.events();
-            ui = new GCODE.ui();
+            ui = new GCODE.ui(this, events);
             repository = new GCODE.repository();
             createView("default", $("#gcode"));
         },
@@ -86,7 +85,7 @@ GCODE.app = (function () {
          * @param theFile The reader to read from, usually a FileReader
          */
         loadGCode: function (theFile) {
-            var reader = new GCODE.reader(theFile);
+            var reader = new GCODE.reader(theFile, events);
             repository.save(reader);
         },
 

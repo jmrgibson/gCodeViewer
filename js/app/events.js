@@ -24,7 +24,8 @@ GCODE.events = (function () {
             analyzeDone: new Signal(),
             returnLayer: new Signal(),
             returnMultiLayer: new Signal(),
-            analyzeProgress: new Signal()
+            analyzeProgress: new Signal(),
+            toWorker: new Signal()
         }
     }
 });
