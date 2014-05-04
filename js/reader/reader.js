@@ -4,7 +4,7 @@
  * Time: 7:31 AM
  */
 
-GCODE.reader = (function(filename, gCodeFile, eventManager){
+GCODE.reader = (function(filename, gCodeFile, eventManager, config){
     // ***** PRIVATE ******
     var name;
     var gcode, lines;
@@ -29,14 +29,7 @@ GCODE.reader = (function(filename, gCodeFile, eventManager){
     var volSpeedsByLayer = {};
     var extrusionSpeeds = {};
     var extrusionSpeedsByLayer = {};
-    var gCodeOptions = {
-        sortLayers: false, // TODO: remove
-        purgeEmptyLayers: true, // TODO: remove
-        analyzeModel: false, // TODO: remove
-        filamentType: "ABS", // TODO: remove
-        filamentDia: 1.75, // TODO: remove
-        nozzleDia: 0.4 // TODO: remove
-    };
+    var gCodeOptions = config.getOptions();
 
     /**
      * Holds the event manager
@@ -307,11 +300,6 @@ GCODE.reader = (function(filename, gCodeFile, eventManager){
 
     // ***** PUBLIC *******
     return {
-        setOption: function(options){
-            for(var opt in options){
-                gCodeOptions[opt] = options[opt];
-            }
-        },
         getLayerFilament: function(z){
             return filamentByLayer[z];
         },

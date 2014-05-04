@@ -16,6 +16,13 @@ GCODE.app = (function () {
     var events;
 
     /**
+     * Holds gCode app related configuration
+     *
+     * @type {GCODE.config}
+     */
+    var config;
+
+    /**
      * Holds the gCodeViewer UI logic
      *
      * @type {GCODE.ui}
@@ -74,6 +81,7 @@ GCODE.app = (function () {
          */
         init: function() {
             events = new GCODE.events();
+            config = new GCODE.config();
             ui = new GCODE.ui(this, events);
             repository = new GCODE.repository();
             createView("default", $("#gcode"));
@@ -86,7 +94,7 @@ GCODE.app = (function () {
          * @param {string} gCode The actual gCode
          */
         loadGCode: function (filename, gCode) {
-            var reader = new GCODE.reader(filename, gCode, events);
+            var reader = new GCODE.reader(filename, gCode, events, config);
             repository.save(reader);
         },
 
