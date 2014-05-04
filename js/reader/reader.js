@@ -30,12 +30,12 @@ GCODE.reader = (function(filename, gCodeFile, eventManager){
     var extrusionSpeeds = {};
     var extrusionSpeedsByLayer = {};
     var gCodeOptions = {
-        sortLayers: false,
-        purgeEmptyLayers: true,
-        analyzeModel: false,
-        filamentType: "ABS",
-        filamentDia: 1.75,
-        nozzleDia: 0.4
+        sortLayers: false, // TODO: remove
+        purgeEmptyLayers: true, // TODO: remove
+        analyzeModel: false, // TODO: remove
+        filamentType: "ABS", // TODO: remove
+        filamentDia: 1.75, // TODO: remove
+        nozzleDia: 0.4 // TODO: remove
     };
 
     /**

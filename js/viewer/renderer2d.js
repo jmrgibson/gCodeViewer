@@ -25,8 +25,8 @@ GCODE.renderer = (function(){
     var initialized=false;
     var displayType = {speed: 1, expermm: 2, volpersec: 3};
     var renderOptions = {
-        showMoves: true,
-        showRetracts: true,
+        showMoves: true, // TODO: remove
+        showRetracts: true, // TODO: remove
         colorGrid: "#bbbbbb",
         extrusionWidth: 1,
 //        colorLine: ["#000000", "#aabb88",  "#ffe7a0", "#6e7700", "#331a00", "#44ba97", "#08262f", "#db0e00", "#ff9977"],
@@ -37,14 +37,14 @@ GCODE.renderer = (function(){
         colorRestart: "#0000ff",
         sizeRetractSpot: 2,
         modelCenter: {x: 0, y: 0},
-        moveModel: true,
-        differentiateColors: true,
-        showNextLayer: false,
-        alpha: false,
-        actualWidth: false,
+        moveModel: true, // TODO: remove
+        differentiateColors: true, // TODO: remove
+        showNextLayer: false, // TODO: remove
+        alpha: false, // TODO: remove
+        actualWidth: false, // TODO: remove
         renderErrors: false,
-        renderAnalysis: false,
-        speedDisplayType: displayType.speed
+        renderAnalysis: false, // TODO: remove
+        speedDisplayType: displayType.speed // TODO: remove
     };
 
     var offsetModelX=0, offsetModelY=0;
