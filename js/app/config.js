@@ -82,10 +82,10 @@ GCODE.config = (function () {
 
     /** Config filter for boolean values */
     var boolean = function (value) {
-        if (value == 1 || value.toLowerCase() === "true") {
+        if (value.new === true || value.new == 1 || value.new === "true") {
             value.new = true;
             return true;
-        } else if (value == 0 || value.toLowerCase() === "false") {
+        } else if (value.new === false || value.new == 0 || value.new === "false") {
             value.new = false;
             return true;
         }
@@ -146,11 +146,13 @@ GCODE.config = (function () {
          * @param {Object} options
          */
         setOptions: function (options) {
+            var valid = true;
             for (var key in options) {
                 if (this[key] !== undefined && this[key]["set"] !== undefined) {
-                    this[key].set(options[key]);
+                    valid &= this[key].set(options[key]);
                 }
             }
+            return valid;
         },
 
         /** Sort layers by Z */
