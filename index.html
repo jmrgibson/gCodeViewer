@@ -230,7 +230,7 @@
                             <div class="form-group">
                                 <label for="filamentDia" class="col-sm-3 control-label">Plastic diameter:</label>
                                 <div class="col-sm-9">
-                                    <input type="text" value="1.75" id="filamentDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                    <input type="text" value="1.75" id="filamentDia" data-config-bind="filamentDia" class="form-control" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -238,10 +238,10 @@
                                 <div class="col-sm-9">
                                     <div class="btn-group" data-toggle="buttons">
                                         <label class="btn btn-default active">
-                                            <input type="radio" name="radPlastic" id="plasticABS" value="ABS" onclick="GCODE.ui.processOptions()" checked> ABS
+                                            <input type="radio" name="radPlastic" id="plasticABS" value="ABS" data-config-bind="filamentType" checked> ABS
                                         </label>
                                         <label class="btn btn-default">
-                                            <input type="radio" name="radPlastic" id="plasticPLA" value="PLA" onclick="GCODE.ui.processOptions()"> PLA
+                                            <input type="radio" name="radPlastic" id="plasticPLA" value="PLA" data-config-bind="filamentType"> PLA
                                         </label>
                                     </div>
                                 </div>
@@ -249,7 +249,7 @@
                             <div class="form-group">
                                 <label for="nozzleDia" class="col-sm-3 control-label">Nozzle size:</label>
                                 <div class="col-sm-9">
-                                    <input type="text" value="0.4" id="nozzleDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                    <input type="text" value="0.4" id="nozzleDia" data-config-bind="nozzleDia" class="form-control" />
                                 </div>
                             </div>
                         </form>
@@ -265,13 +265,13 @@
                                 <div class="col-sm-9">
                                     <div class="btn-group" data-toggle="buttons">
                                         <label class="btn btn-default active">
-                                            <input type="radio" name="speedDisplay" id="speedDisplayRadio" value="1"  onclick="GCODE.ui.processOptions()" checked> mm/sec
+                                            <input type="radio" name="speedDisplay" value="1"  data-config-bind="speedDisplayType" checked> mm/sec
                                         </label>
                                         <label class="btn btn-default">
-                                            <input type="radio" name="speedDisplay" id="exPerMMRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm extrusion per mm move
+                                            <input type="radio" name="speedDisplay" value="2"  data-config-bind="speedDisplayType"> mm extrusion per mm move
                                         </label>
                                         <label class="btn btn-default">
-                                            <input type="radio"  name="speedDisplay" id="volPerSecRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm^3/sec
+                                            <input type="radio"  name="speedDisplay" value="3" data-config-bind="speedDisplayType"> mm^3/sec
                                         </label>
                                     </div>
                                 </div>
@@ -281,25 +281,25 @@
                                 <div class="col-sm-9">
                                     <div class="checkbox">
                                         <label for="showMovesCheckbox">
-                                            <input type="checkbox" id="showMovesCheckbox" value="1"  onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="showMovesCheckbox" value="1"  data-config-bind="showMoves" checked>
                                             Show non-extrusion moves
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="showRetractsCheckbox">
-                                            <input type="checkbox" id="showRetractsCheckbox" value="2" onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="showRetractsCheckbox" value="2" data-config-bind="showRetracts" checked>
                                             Show retracts and restarts
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="differentiateColorsCheckbox">
-                                            <input type="checkbox" id="differentiateColorsCheckbox" value="7"  onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="differentiateColorsCheckbox" value="7"  data-config-bind="differentiateColors" checked>
                                             Show different speeds with different colors
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="showNextLayer">
-                                            <input type="checkbox" id="showNextLayer" value="9"  onclick="GCODE.ui.processOptions()" >
+                                            <input type="checkbox" id="showNextLayer" value="9"  data-config-bind="showNextLayer" >
                                             Show +1 layer
                                         </label>
                                     </div>
@@ -310,19 +310,19 @@
                                 <div class="col-sm-9">
                                     <div class="checkbox">
                                         <label for="moveModelCheckbox">
-                                            <input type="checkbox" id="moveModelCheckbox" value="3"  onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="moveModelCheckbox" value="3"  data-config-bind="moveModel" checked>
                                             Move model to the center of the grid
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="thickExtrusionCheckbox">
-                                            <input type="checkbox" id="thickExtrusionCheckbox" value="8"  onclick="GCODE.ui.processOptions()">
+                                            <input type="checkbox" id="thickExtrusionCheckbox" value="8"  data-config-bind="actualWidth">
                                             Emulate extrusion width
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="alphaCheckbox">
-                                            <input type="checkbox" id="alphaCheckbox" value="10"  onclick="GCODE.ui.processOptions()" >
+                                            <input type="checkbox" id="alphaCheckbox" value="10"  data-config-bind="alpha" >
                                             Render lines slightly transparent
                                         </label>
                                     </div>
@@ -345,19 +345,19 @@
                                 <div class="col-sm-9">
                                     <div class="checkbox">
                                         <label for="sortLayersCheckbox">
-                                            <input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="sortLayersCheckbox" value="4" data-config-bind="sortLayers" checked>
                                             Sort layers by Z
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="purgeEmptyLayersCheckbox">
-                                            <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5"  onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5"  data-config-bind="purgeEmptyLayers" checked>
                                             Hide empty layers
                                         </label>
                                     </div>
                                     <div class="checkbox">
                                         <label for="showGCodeCheckbox">
-                                            <input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>
+                                            <input type="checkbox" id="showGCodeCheckbox" value="6" data-config-bind="showGCode" checked>
                                             Show GCode in GCode tab (memory intensive!)
                                         </label>
                                     </div>

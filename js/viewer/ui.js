@@ -295,12 +295,44 @@ GCODE.ui = (function (app, eventManager) {
         $('#file').bind('change', handleFileSelect, false);
     }
 
+    /**
+     * Event handler for a single preferences item. Should be called onChange.
+     */
+    var handlePreferencesChanged = function() {
+        var key = $(this).attr("data-config-bind");
+        if ($(this).attr("type") == "checkbox") {
+            var value = $(this).prop("checked");
+        } else {
+            var value = $(this).val();
+        }
+        var options = {}
+        options[key] = value;
+        if (app.getConfig().setOptions(options)) {
+            notify.success("Saved config");
+        } else {
+            notify.error("Could not save config, please verify that your input is well-formatted.");
+        }
+    };
+
+    /**
+     * Initializes the perferences page
+     */
+    var initPreferences = function() {
+        // bind config changed handlers
+        $("[data-config-bind]").each(function() {
+            $(this).change(handlePreferencesChanged);
+        });
+
+        // TODO: set initial form values from config
+    }
+
 
     /**
      * Initialize UI.
      */
     var init = function () {
         checkCapabilities();
+        initPreferences();
         initFileSelect();
         progress.reset();
         initWorker();

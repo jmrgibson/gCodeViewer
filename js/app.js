@@ -88,6 +88,15 @@ GCODE.app = (function () {
         },
 
         /**
+         * Returns the gCode app config.
+         *
+         * @returns {GCODE.config}
+         */
+        getConfig: function() {
+            return config;
+        },
+
+        /**
          * Loads (and parses) the given GCode from the reader
          *
          * @param {string} filename The filename of the file

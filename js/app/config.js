@@ -22,7 +22,8 @@ GCODE.config = (function () {
         showNextLayer: false,
         actualWidth: false,
         renderAnalysis: false,
-        speedDisplayType: 1
+        speedDisplayType: 1,
+        showGCode: true
     };
 
     /**
@@ -192,7 +193,10 @@ GCODE.config = (function () {
         filamentType: new Config("filamentType", options(["ABS", "PLA"])),
 
         /** Speed display type, 1: mm/sec, 2: mm extrusion per mm move, 3: mm^3/sec */
-        speedDisplayType: new Config("filamentType", chain(integer, options([1, 2, 3]))),
+        speedDisplayType: new Config("speedDisplayType", chain(integer, options([1, 2, 3]))),
+
+        /** Show GCode in CodeMirror tab */
+        showGCode: new Config("showGCode", boolean),
 
         renderAnalysis: new Config("renderAnalysis", boolean)
     };
