@@ -81,6 +81,11 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
             toProgress = progressStore.to;
         }
 
+        // clear canvas
+        var p1 = ctx.transformedPoint(0, 0);
+        var p2 = ctx.transformedPoint(canvas[0].width, canvas[0].height);
+        ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+
         // if no model is present, just draw a grid
         if (!model) {
             drawGrid();
@@ -93,10 +98,8 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
             return;
         }
 
+        // draw grid with model
         var gCodeOpts = curReader.getOptions();
-        var p1 = ctx.transformedPoint(0, 0);
-        var p2 = ctx.transformedPoint(canvas.width, canvas.height);
-        ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
         drawGrid();
         if (renderOptions['alpha']) {
             ctx.globalAlpha = 0.6;
