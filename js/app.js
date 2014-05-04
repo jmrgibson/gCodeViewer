@@ -41,7 +41,7 @@ GCODE.app = (function () {
      *
      * @type {GCODE.view[]}
      */
-    var views = [];
+    var views = {};
 
     /**
      * Creates a full GCode viewer within the given DOM element. The DOM element has to be empty.
@@ -103,8 +103,11 @@ GCODE.app = (function () {
          * @param {string} gCode The actual gCode
          */
         loadGCode: function (filename, gCode) {
-            var reader = new GCODE.reader(filename, gCode, events, config);
-            repository.save(reader);
+            var that = this;
+            var reader = new GCODE.reader(filename, gCode, events, config, function() {
+                repository.save(reader);
+                that.display(filename, "default");
+            });
         },
 
         /**
@@ -122,16 +125,17 @@ GCODE.app = (function () {
          * @param {string} gCodeName
          * @param {string} viewerName
          */
-        display: function (GCodeName, viewerName) {
-            if (!(GCodeName in gcodes)) {
-                handleError("GCode '" + GCodeName + "' is not loaded!");
+        display: function (gCodeName, viewerName) {
+            var reader = repository.find(gCodeName);
+            if (null == reader) {
+                handleError("GCode '" + gCodeName + "' is not loaded!");
                 return;
             }
-            if (!(viewerName in views)) {
+            if (undefined == views[viewerName]) {
                 handleError("View '" + viewerName + "' is unknown!");
                 return;
             }
-            views[viewerName].load(gcodes[GCodeName]);
+            views[viewerName].load(reader);
         }
     };
 

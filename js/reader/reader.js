@@ -4,7 +4,7 @@
  * Time: 7:31 AM
  */
 
-GCODE.reader = (function(filename, gCodeFile, eventManager, config){
+GCODE.reader = (function(filename, gCodeFile, eventManager, config, ready){
     // ***** PRIVATE ******
     var name;
     var gcode, lines;
@@ -214,18 +214,6 @@ GCODE.reader = (function(filename, gCodeFile, eventManager, config){
         }
     };
 
-    var passDataToRenderer = function() {
-        if (gCodeOptions["sortLayers"]) {
-            sortLayers();
-        }
-        if (gCodeOptions["purgeEmptyLayers"]) {
-            purgeLayers();
-        }
-        // TODO: pass to view
-        GCODE.renderer.doRender(model, 0);
-        GCODE.renderer3d.setModel(model);
-    };
-
     var processLayerFromWorker = function(msg) {
         model[msg.layerNum] = msg.cmds;
         z_heights[msg.zHeightObject.zValue] = msg.zHeightObject.layer;
@@ -250,13 +238,22 @@ GCODE.reader = (function(filename, gCodeFile, eventManager, config){
         },
         analyzeDone: function(data) {
             processAnalyzeModelDone(data);
-            passDataToRenderer();
+            if (gCodeOptions["sortLayers"]) {
+                sortLayers();
+            }
+            if (gCodeOptions["purgeEmptyLayers"]) {
+                purgeLayers();
+            }
 
             // unregister listeners
-            events.process.returnModel.remove(this.returnModel);
-            events.process.analyzeDone.remove(this.analyzeDone);
-            events.process.returnLayer.remove(this.returnLayer);
-            events.process.returnMultiLayer.remove(this.returnMultiLayer);
+            events.process.returnModel.remove(handlers.returnModel);
+            events.process.analyzeDone.remove(handlers.analyzeDone);
+            events.process.returnLayer.remove(handlers.returnLayer);
+            events.process.returnMultiLayer.remove(handlers.returnMultiLayer);
+
+            if (ready != null) {
+                ready();
+            }
         },
         returnLayer: function(data) {
             processLayerFromWorker(data);
@@ -334,6 +331,10 @@ GCODE.reader = (function(filename, gCodeFile, eventManager, config){
         },
         getOptions: function(){
             return gCodeOptions;
+        },
+
+        getModel: function() {
+            return model;
         },
 
         /**

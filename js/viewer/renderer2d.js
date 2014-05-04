@@ -6,8 +6,21 @@
  */
 
 
-GCODE.renderer = (function(){
+GCODE.renderer = (function(canvasRoot, config, bindToView){
 // ***** PRIVATE ******
+
+    /**
+     * Holds the view the renderer is bound to.
+     * @type {GCODE.view}
+     */
+    var view = bindToView;
+
+    /**
+     * Reader of the currently loaded GCode.
+     * @type {GCODE.reader}
+     */
+    var curReader;
+
     var canvas;
     var ctx;
     var zoomFactor= 3, zoomFactorDelta = 0.4;
@@ -56,20 +69,49 @@ GCODE.renderer = (function(){
     var extrusionSpeedsByLayer = {};
 
 
-    var reRender = function(){
-        var gCodeOpts = GCODE.gCodeReader.getOptions();
-        var p1 = ctx.transformedPoint(0,0);
-        var p2 = ctx.transformedPoint(canvas.width,canvas.height);
-        ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
-        drawGrid();
-        if(renderOptions['alpha']){ctx.globalAlpha = 0.6;}
-        else {ctx.globalAlpha = 1;}
-        if(renderOptions['actualWidth']){renderOptions['extrusionWidth'] = gCodeOpts['filamentDia']*gCodeOpts['wh']/zoomFactor;}
-        else {renderOptions['extrusionWidth'] = gCodeOpts['filamentDia']*gCodeOpts['wh']/zoomFactor/2;}
-        if(renderOptions['showNextLayer'] && layerNumStore < model.length - 1) {
-            drawLayer(layerNumStore+1, 0, GCODE.renderer.getLayerNumSegments(layerNumStore+1), true);
+    var reRender = function(layerNum, fromProgress, toProgress) {
+        // fetch args from store if none are passed
+        if (null ==layerNum) {
+            layerNum = layerNumStore;
         }
-        drawLayer(layerNumStore, progressStore.from, progressStore.to);
+        if (null == fromProgress) {
+            fromProgress = progressStore.from;
+        }
+        if (null == toProgress) {
+            toProgress = progressStore.to;
+        }
+
+        // if no model is present, just draw a grid
+        if (!model) {
+            drawGrid();
+            return;
+        }
+
+        // check if layer is in bounds
+        if (layerNum >= model.length) {
+            console.log("Got request to render non-existent layer!!");
+            return;
+        }
+
+        var gCodeOpts = curReader.getOptions();
+        var p1 = ctx.transformedPoint(0, 0);
+        var p2 = ctx.transformedPoint(canvas.width, canvas.height);
+        ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+        drawGrid();
+        if (renderOptions['alpha']) {
+            ctx.globalAlpha = 0.6;
+        } else {
+            ctx.globalAlpha = 1;
+        }
+        if (renderOptions['actualWidth']) {
+            renderOptions['extrusionWidth'] = gCodeOpts['filamentDia'] * gCodeOpts['wh'] / zoomFactor;
+        } else {
+            renderOptions['extrusionWidth'] = gCodeOpts['filamentDia'] * gCodeOpts['wh'] / zoomFactor / 2;
+        }
+        if (renderOptions['showNextLayer'] && layerNum < model.length - 1) {
+            drawLayer(layerNum + 1, 0, getLayerNumSegments(layerNum + 1), true);
+        }
+        drawLayer(layerNum, fromProgress, toProgress);
     };
 
     function trackTransforms(ctx){
@@ -129,36 +171,34 @@ GCODE.renderer = (function(){
     }
 
 
-    var  startCanvas = function() {
-        canvas = document.getElementById('canvas');
-
+    var startCanvas = function() {
         // Проверяем понимает ли браузер canvas
-        if (!canvas.getContext) {
+        if (!canvas[0].getContext) {
             throw "exception";
         }
 
-        $("#canvas").attr("width", $("#gcode").css("width"));
-        $("#canvas").attr("height", $("#gcode").css("height"));
+        canvas.attr("width", view.getWidth());
+        canvas.attr("height", view.getHeight());
 
-        ctx = canvas.getContext('2d'); // Получаем 2D контекст
-        ctxHeight = canvas.height;
-        ctxWidth = canvas.width;
+        ctx = canvas[0].getContext('2d'); // Получаем 2D контекст
+        ctxHeight = canvas[0].height;
+        ctxWidth = canvas[0].width;
         lastX = ctxWidth/2;
         lastY = ctxHeight/2;
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         trackTransforms(ctx);
 
-        canvas.addEventListener('mousedown',function(evt){
+        canvas[0].addEventListener('mousedown',function(evt){
             document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
-            lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-            lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
+            lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
+            lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
             dragStart = ctx.transformedPoint(lastX,lastY);
             dragged = false;
         },false);
-        canvas.addEventListener('mousemove',function(evt){
-            lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-            lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
+        canvas[0].addEventListener('mousemove',function(evt){
+            lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
+            lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
             dragged = true;
             if (dragStart){
                 var pt = ctx.transformedPoint(lastX,lastY);
@@ -166,7 +206,7 @@ GCODE.renderer = (function(){
                 reRender();
             }
         },false);
-        canvas.addEventListener('mouseup',function(evt){
+        canvas[0].addEventListener('mouseup',function(evt){
             dragStart = null;
             if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
         },false);
@@ -185,9 +225,20 @@ GCODE.renderer = (function(){
             if (delta) zoom(delta);
             return evt.preventDefault() && false;
         };
-        canvas.addEventListener('DOMMouseScroll',handleScroll,false);
-        canvas.addEventListener('mousewheel',handleScroll,false);
+        canvas[0].addEventListener('DOMMouseScroll',handleScroll,false);
+        canvas[0].addEventListener('mousewheel',handleScroll,false);
 
+    };
+
+    var getModelNumLayers = function(){
+        return model?model.length:1;
+    };
+    var getLayerNumSegments = function(layer){
+        if(model){
+            return model[layer]?model[layer].length:1;
+        }else{
+            return 1;
+        }
     };
 
     var drawGrid = function() {
@@ -262,7 +313,7 @@ GCODE.renderer = (function(){
             }
         }
 
-        prevZ = GCODE.renderer.getZ(layerNum);
+        prevZ = getZ(layerNum);
 
 //        ctx.strokeStyle = renderOptions["colorLine"];
         for(i=fromProgress;i<=toProgress;i++){
@@ -406,103 +457,72 @@ GCODE.renderer = (function(){
         ctx.stroke();
     };
 
-
 // ***** PUBLIC *******
-    return {
-        init: function(){
-            startCanvas();
-            initialized = true;
-            ctx.translate((canvas.width - gridSizeX*zoomFactor)/2,gridSizeY*zoomFactor+(canvas.height - gridSizeY*zoomFactor)/2);
-        },
-        setOption: function(options){
-            for(var opt in options){
-                if(options.hasOwnProperty(opt)){
-                    renderOptions[opt] = options[opt];
-//                    console.log("Got a set option call: " + opt + " == " + options[opt]);
-                }
-            };
+    this.getOptions = function(){
+        return renderOptions;
+    };
+    this.debugGetModel = function(){
+        return model;
+    };
+    this.render = function(layerNum, fromProgress, toProgress){
+        reRender(layerNum, fromProgress, toProgress);
+    };
 
-            if(initialized)reRender();
-        },
-        getOptions: function(){
-            return renderOptions;
-        },
-        debugGetModel: function(){
-            return model;
-        },
-        render: function(layerNum, fromProgress, toProgress){
-            var gCodeOpts = GCODE.gCodeReader.getOptions();
-            if(!initialized)this.init();
-            if(!model){
-                drawGrid();
-            }else{
-                if(layerNum < model.length){
-                    var p1 = ctx.transformedPoint(0,0);
-                    var p2 = ctx.transformedPoint(canvas.width,canvas.height);
-                    ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
-                    drawGrid();
-                    if(renderOptions['alpha']){ctx.globalAlpha = 0.6;}
-                    else {ctx.globalAlpha = 1;}
-                    if(renderOptions['actualWidth']){renderOptions['extrusionWidth'] = gCodeOpts['filamentDia']*gCodeOpts['wh']/zoomFactor;}
-                    else {renderOptions['extrusionWidth'] = gCodeOpts['filamentDia']*gCodeOpts['wh']/zoomFactor/2;}
-                    if(renderOptions['showNextLayer'] && layerNum < model.length - 1) {
-                        drawLayer(layerNum+1, 0, this.getLayerNumSegments(layerNum+1), true);
-                    }
-                    drawLayer(layerNum, fromProgress, toProgress);
-                }else{
-                    console.log("Got request to render non-existent layer!!");
-                }
-            }
-        },
-        getModelNumLayers: function(){
-            return model?model.length:1;
-        },
-        getLayerNumSegments: function(layer){
-            if(model){
-                return model[layer]?model[layer].length:1;
-            }else{
-                return 1;
-            }
-        },
-        doRender: function(mdl, layerNum){
-            var mdlInfo;
-            model = mdl;
-            prevX=0;
-            prevY=0;
-            if(!initialized)this.init();
+    this.getModelNumLayers = getModelNumLayers,
 
-            mdlInfo = GCODE.gCodeReader.getModelInfo();
-            speeds = mdlInfo.speeds;
-            speedsByLayer = mdlInfo.speedsByLayer;
-            volSpeeds = mdlInfo.volSpeeds;
-            volSpeedsByLayer = mdlInfo.volSpeedsByLayer;
-            extrusionSpeeds = mdlInfo.extrusionSpeeds;
-            extrusionSpeedsByLayer = mdlInfo.extrusionSpeedsByLayer;
+    /**
+     * Loads the GCode reader
+     * @param {GCODE.reader} reader
+     */
+    this.load = function(reader){
+        curReader = reader;
+        var mdlInfo;
+        model = reader.getModel();
+        prevX=0;
+        prevY=0;
+        if(!initialized)this.init();
+
+        mdlInfo = reader.getModelInfo();
+        speeds = mdlInfo.speeds;
+        speedsByLayer = mdlInfo.speedsByLayer;
+        volSpeeds = mdlInfo.volSpeeds;
+        volSpeedsByLayer = mdlInfo.volSpeedsByLayer;
+        extrusionSpeeds = mdlInfo.extrusionSpeeds;
+        extrusionSpeedsByLayer = mdlInfo.extrusionSpeedsByLayer;
 //            console.log(speeds);
 //            console.log(mdlInfo.min.x + ' ' + mdlInfo.modelSize.x);
-            offsetModelX = (gridSizeX/2-(mdlInfo.min.x+mdlInfo.modelSize.x/2))*zoomFactor;
-            offsetModelY = (mdlInfo.min.y+mdlInfo.modelSize.y/2)*zoomFactor-gridSizeY/2*zoomFactor;
-            if(ctx)ctx.translate(offsetModelX, offsetModelY);
-            var scaleF = mdlInfo.modelSize.x>mdlInfo.modelSize.y?(canvas.width)/mdlInfo.modelSize.x/zoomFactor:(canvas.height)/mdlInfo.modelSize.y/zoomFactor;
-            var pt = ctx.transformedPoint(canvas.width/2,canvas.height/2);
-            var transform = ctx.getTransform();
-            var sX = scaleF/transform.a, sY = scaleF/transform.d;
-            ctx.translate(pt.x,pt.y);
-            ctx.scale(0.98*sX,0.98*sY);
-            ctx.translate(-pt.x,-pt.y);
+        offsetModelX = (gridSizeX/2-(mdlInfo.min.x+mdlInfo.modelSize.x/2))*zoomFactor;
+        offsetModelY = (mdlInfo.min.y+mdlInfo.modelSize.y/2)*zoomFactor-gridSizeY/2*zoomFactor;
+        if(ctx)ctx.translate(offsetModelX, offsetModelY);
+        var scaleF = mdlInfo.modelSize.x>mdlInfo.modelSize.y?(canvas[0].width)/mdlInfo.modelSize.x/zoomFactor:(canvas[0].height)/mdlInfo.modelSize.y/zoomFactor;
+        var pt = ctx.transformedPoint(canvas[0].width/2,canvas[0].height/2);
+        var transform = ctx.getTransform();
+        var sX = scaleF/transform.a, sY = scaleF/transform.d;
+        ctx.translate(pt.x,pt.y);
+        ctx.scale(0.98*sX,0.98*sY);
+        ctx.translate(-pt.x,-pt.y);
 //            ctx.scale(scaleF,scaleF);
-            this.render(layerNum, 0, model[layerNum].length);
-        },
-        getZ: function(layerNum){
-            if(!model&&!model[layerNum]){
-                return '-1';
-            }
-            var cmds = model[layerNum];
-            for(var i=0;i<cmds.length;i++){
-                if(cmds[i].prevZ!==undefined)return cmds[i].prevZ;
-            }
+        this.render(0, 0, model[0].length);
+    };
+    var getZ = function(layerNum){
+        if(!model&&!model[layerNum]){
             return '-1';
         }
+        var cmds = model[layerNum];
+        for(var i=0;i<cmds.length;i++){
+            if(cmds[i].prevZ!==undefined)return cmds[i].prevZ;
+        }
+        return '-1';
+    };
+    this.getZ = getZ;
 
-}
+
+    var __constructor = function() {
+        self = this;
+        canvas = $(canvasRoot);
+        startCanvas();
+        initialized = true;
+        ctx.translate((canvas[0].width - gridSizeX*zoomFactor)/2,gridSizeY*zoomFactor+(canvas[0].height - gridSizeY*zoomFactor)/2);
+    }();
+    return this;
 });

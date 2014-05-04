@@ -3,7 +3,7 @@
  * Date: 03/30/14
  * Time: 5:54 PM
  */
-GCODE.view = (function (domRoot) {
+GCODE.view = (function (domRoot, appConfig) {
 
     /**
      * Holds the DOM root node of the view as jQuery selector
@@ -22,13 +22,19 @@ GCODE.view = (function (domRoot) {
      * Holds the 2D GCode renderer
      * @type {GCODE.renderer}
      */
-    var renderer2d = new GCODE.renderer();
+    var renderer2d;
 
     /**
      * Display type enum
      * @type {{speed: number, expermm: number, volpersec: number}}
      */
     var displayType = {speed: 1, expermm: 2, volpersec: 3};
+
+    /**
+     * Holds the GCode app config
+     * @type {GCODE.config}
+     */
+    var config = appConfig;
 
     /**
      * The lines of GCode of the current layer
@@ -276,7 +282,12 @@ GCODE.view = (function (domRoot) {
     /**
      * Initializes the sliders of the 2D render pane
      */
+        var self = this;
     var init2dEventHandlers = function() {
+        // init 2d renderer
+        var canvasRoot = root.find(".render2d");
+        renderer2d = new GCODE.renderer(canvasRoot, config, self);
+
         // TODO: fix horizontal slider
         var handle;
         // sliderHor = $( "#slider-horizontal" );
@@ -295,7 +306,9 @@ GCODE.view = (function (domRoot) {
         var maxLayer = renderer2d.getModelNumLayers() - 1;
         root.find(".layer-info .maxLayer").text(maxLayer);
 
-        sliderVer.slider("destroy");
+        if (sliderVer !== undefined) {
+            sliderVer.slider("destroy");
+        }
         sliderVer = root.find(".layer-scrollbar");
         sliderVer.slider({
             reversed : true,
@@ -363,43 +376,66 @@ GCODE.view = (function (domRoot) {
      * Initializes the view and makes sure everything is ready.
      */
     var init = function () {
-
+        init2dEventHandlers();
     }
 
-    init();
-    return {
+    /**
+     * Holds the navigation
+     */
+    this.navigation = {
         /**
          * Opens the 2D layer view in this view
          */
-        "display2d": function () {
+        display2d: function () {
         },
 
         /**
          * Opens the 3D model in this view
          */
-        "display3d": function () {
+        display3d: function () {
         },
 
         /**
          * Opens the GCode source in this view
          */
-        "displaySource": function () {
-        },
+        displaySource: function () {
+        }
+    };
 
-        /**
-         * Loads a GCode into this view
-         *
-         * @param {GCODE.reader} reader
-         */
-        "load": function (reader) {
-            gcode = reader;
+    /**
+     * Returns the height of this view
+     * @returns {css|*|css|css}
+     */
+    this.getHeight = function() {
+        return domRoot.css("height");
+    };
 
-            // TODO: set CodeMirror to gCode file contents
+    /**
+     * Returns the width of this view
+     * @returns {css|*|css|css}
+     */
+    this.getWidth = function() {
+        return domRoot.css("width");
+    };
+
+
+    /**
+     * Loads a GCode into this view
+     *
+     * @param {GCODE.reader} reader
+     */
+    this.load = function (reader) {
+        gcode = reader;
+        renderer2d.load(reader);
 //            if (showGCode) {
 //                myCodeMirror.setValue(theFile.target.result);
 //            } else {
 //                myCodeMirror.setValue("GCode view is disabled. You can enable it in 'GCode analyzer options' section.")
 //            }
-        }
-    }
+    };
+
+    var __construct = function() {
+        init();
+    }();
+    return this;
 });
