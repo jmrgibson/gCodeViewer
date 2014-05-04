@@ -44,6 +44,7 @@ GCODE.ui = (function (app, eventManager) {
         }
         $.growl(msg, {
             type: severity,
+            z_index: 1100,
             position: { from: "bottom", align: "right" },
             delay: (sticky != null && sticky) ? 0 : 5000
         });
