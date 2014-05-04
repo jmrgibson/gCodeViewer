@@ -4,7 +4,7 @@
  * Time: 7:31 AM
  */
 
-GCODE.reader = (function(fileReader, eventManager){
+GCODE.reader = (function(filename, gCodeFile, eventManager){
     // ***** PRIVATE ******
     var name;
     var gcode, lines;
@@ -284,14 +284,12 @@ GCODE.reader = (function(fileReader, eventManager){
      *
      * @param {FileReader} reader
      */
-    var load = function(reader){
-        name = reader.name;
+    var load = function(filename, gCodeFile){
+        name = filename;
         model = [];
         z_heights = [];
-        detectSlicer(reader.target.result);
-        lines = reader.target.result.split(/\n/);
-        reader.target.result = null;
-//            prepareGCode();
+        detectSlicer(gCodeFile);
+        lines = gCodeFile.split(/\n/);
 
         events.process.toWorker.dispatch({
             "cmd":"parseGCode",
@@ -304,9 +302,8 @@ GCODE.reader = (function(fileReader, eventManager){
         });
         delete lines;
     };
-
     // invoke constructor
-    load(fileReader);
+    load(filename, gCodeFile);
 
     // ***** PUBLIC *******
     return {

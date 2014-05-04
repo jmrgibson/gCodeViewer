@@ -134,11 +134,11 @@ GCODE.ui = (function (app, eventManager) {
     // add default UI listeners
     events.process.returnModel.add(function () {
         progress.set(progress.load, 100);
-        notify.info("GCode has been loaded");
+        notify.success("GCode has been parsed");
     });
     events.process.analyzeDone.add(function (data) {
         progress.set(progress.analyze, 100);
-        notify.info("GCode has been analyzed and is ready to be displayed");
+        notify.success("GCode has been analyzed and is ready to be displayed");
         // TODO: move to view
 //        initSliders();
 //        printModelInfo();
@@ -263,10 +263,12 @@ GCODE.ui = (function (app, eventManager) {
             }
 
             var reader = new FileReader();
-            reader.onload = function (theFile) {
-                progress.reset();
-                app.loadGCode(theFile);
-            };
+            reader.onload = (function (filename) {
+                return function(theFile) {
+                    progress.reset();
+                    app.loadGCode(filename, theFile.target.result);
+                };
+            })(f.name);
             reader.readAsText(f);
         }
     };

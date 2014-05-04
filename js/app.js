@@ -82,10 +82,11 @@ GCODE.app = (function () {
         /**
          * Loads (and parses) the given GCode from the reader
          *
-         * @param theFile The reader to read from, usually a FileReader
+         * @param {string} filename The filename of the file
+         * @param {string} gCode The actual gCode
          */
-        loadGCode: function (theFile) {
-            var reader = new GCODE.reader(theFile, events);
+        loadGCode: function (filename, gCode) {
+            var reader = new GCODE.reader(filename, gCode, events);
             repository.save(reader);
         },
 
