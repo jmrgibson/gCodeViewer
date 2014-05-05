@@ -471,7 +471,9 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
         reRender(layerNum, fromProgress, toProgress);
     };
 
-    this.getModelNumLayers = getModelNumLayers,
+    // make them public
+    this.getModelNumLayers = getModelNumLayers;
+    this.getLayerNumSegments = getLayerNumSegments;
 
     /**
      * Loads the GCode reader

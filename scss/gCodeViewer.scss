@@ -31,14 +31,34 @@ body {
   width: 100%;
   @include box-sizing(border-box);
 }
-
-#gcode {
+#viewContainer {
   background: #ffffff;
   height: 100%;
   margin-top: 0px;
   width: 100%;
   position: relative;
   @include box-sizing(border-box);
+}
+
+
+// single GCode app view
+.view {
+  background: #ffffff;
+  height: 100%;
+  margin-top: 0px;
+  width: 100%;
+  position: relative;
+  @include box-sizing(border-box);
+
+  .tab {
+    width: 100%;
+    height: 100%;
+    display: none;
+
+    &.active {
+      display: block;
+    }
+  }
 }
 
 .logo {

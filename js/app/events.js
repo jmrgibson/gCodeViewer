@@ -16,7 +16,14 @@ GCODE.events = (function () {
         moveLayerDown: new Signal(),
 
         /** Used to change the current active view pane */
-        changePane: new Signal(),
+        navigation: {
+            /** Event handler used to switch to 2d view */
+            show2d: new Signal(),
+            /** Event handler used to switch to 3d view */
+            show3d: new Signal(),
+            /** Event handler used to switch to GCode view */
+            showGCode: new Signal()
+        },
 
         /** Used to interact with the GCODE worker. */
         process: {

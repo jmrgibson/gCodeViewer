@@ -3,14 +3,19 @@
  * Date: 03/30/14
  * Time: 5:54 PM
  */
-GCODE.view = (function (domRoot, appConfig) {
+GCODE.view = (function (domRoot, appConfig, eventManager) {
 
     /**
      * Holds the DOM root node of the view as jQuery selector
-     *
      * @type {jQuery}
      */
     var root = $(domRoot);
+
+    /**
+     * Holds the GCode app event manger
+     * @type {GCODE.events}
+     */
+    var events = eventManager;
 
     /**
      * Holds the GCode to be displayed in this view.
@@ -55,24 +60,102 @@ GCODE.view = (function (domRoot, appConfig) {
 
     /**
      * Holds some underscore templates used to render the legends.
-     * @type {{li: (template), colorBox: (template), colorBoxRetract: (template)}}
      */
     var templates = {
+
+        /** whole view container */
+        container: _.template('\
+            <div class="view">\
+                <% _.each(tabs, function (tab) { %><%= tab %><% }); %>\
+            </div>\
+        '),
+
+        /** single tab in view */
+        tab: _.template('<div class="tab tab<%= id %>"><%= content %></div>'),
+
+        /** tab content for gcode displaying */
+        tabGCode: _.template('<div class="gCodeContainer"></div>'),
+
+        /** tab content for 3d rendering */
+        tab3d: _.template('<div class="3d_container"></div>'),
+
+        /** tab content for 2d rendering */
+        tab2d: _.template('\
+            <div class="toolbar toolbar-right" class="layer-info" style="display: none;">\
+                <div class="panel panel-default">\
+                    <div class="panel-heading">\
+                        Layer info\
+                        <span class="label label-primary">\
+                            <span class="curLayer">0</span> / <span class="maxLayer"></span>\
+                        </span>\
+                    </div>\
+                    <div class="panel-body">\
+                        <ul class="metrics"></ul>\
+                        <strong>Extrude speeds:</strong>\
+                        <div class="extrudeSpeeds"></div>\
+                        <strong>Move speeds:</strong>\
+                        <div class="moveSpeeds"></div>\
+                        <strong>Retract speeds:</strong>\
+                        <div class="retractSpeeds"></div>\
+                    </div>\
+                </div>\
+            </div>\
+            <div class="scrollbar">\
+                <div class="scrollbar-group">\
+                    <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>\
+                    <div class="scrollbar-control">\
+                        <input class="layer-scrollbar" value="" data-slider-id="layer-scrollbar" type="text" />\
+                    </div>\
+                    <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>\
+                </div>\
+            </div>\
+            <canvas class="render2d"></canvas>\
+        '),
+
+        /** 2D model info: used to render a single metric */
         li: _.template('\
             <li title="<%= tooltip %>" data-toggle="tooltip" data-placement="top">\
                 <i class="fa fa-<%= icon %>"></i> <%= metric %>\
             </li>'),
+
+        /** 2D model info: used to render extrusion/move speeds */
         colorBox: _.template('\
             <div class="colorbox">\
                 <div class="color" style="background-color: <%= color %>"></div>\
                 <span><%= speed %></span>\
             </div>'),
+
+        /** 2D model info: used to render retract speeds. */
         colorBoxRetract: _.template('\
             <div class="colorbox colorbox-rounded">\
                 <div class="color" style="background-color: <%= retract %>"></div>\
                 <div class="color" style="background-color: <%= restart %>"></div>\
                 <span><%= speed %></span>\
             </div>')
+    };
+
+    /**
+     * Creates the views HTML.
+     *
+     * @returns {string} viewHtml
+     */
+    var createViewHtml = function() {
+        return templates.container({
+            tabs: [
+                templates.tab({
+                    id: "2d",
+                    content: templates.tab2d()
+                }),
+                templates.tab({
+                    id: "3d",
+                    content: templates.tab3d()
+                }),
+                templates.tab({
+                    id: "GCode",
+                    content: templates.tabGCode()
+                })
+            ]
+        });
     };
 
     /**
@@ -372,11 +455,8 @@ GCODE.view = (function (domRoot, appConfig) {
         root.find(".tab2d .scrollbar-minus").mousedown(oneLayerDownIfPossible);
     };
 
-    /**
-     * Initializes the view and makes sure everything is ready.
-     */
-    var init = function () {
-        init2dEventHandlers();
+    var hideActiveTab = function() {
+        root.find(".tab.active").removeClass("active");
     }
 
     /**
@@ -386,21 +466,32 @@ GCODE.view = (function (domRoot, appConfig) {
         /**
          * Opens the 2D layer view in this view
          */
-        display2d: function () {
+        show2d: function () {
+            hideActiveTab();
+            root.find(".tab2d").addClass("active");
         },
 
         /**
          * Opens the 3D model in this view
          */
-        display3d: function () {
+        show3d: function () {
+            hideActiveTab();
+            root.find(".tab3d").addClass("active");
         },
 
         /**
          * Opens the GCode source in this view
          */
-        displaySource: function () {
+        showGCode: function () {
+            hideActiveTab();
+            root.find(".tabGCode").addClass("active");
         }
     };
+
+    /* Register event listeners to change tabs for whole application */
+    events.navigation.show2d.add(this.navigation.show2d);
+    events.navigation.show3d.add(this.navigation.show3d);
+    events.navigation.showGCode.add(this.navigation.showGCode);
 
     /**
      * Returns the height of this view
@@ -435,7 +526,8 @@ GCODE.view = (function (domRoot, appConfig) {
     };
 
     var __construct = function() {
-        init();
+        root.html(createViewHtml());
+        init2dEventHandlers();
     }();
     return this;
 });

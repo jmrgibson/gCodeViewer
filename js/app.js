@@ -50,7 +50,7 @@ GCODE.app = (function () {
      * @param domRoot the DOM root element
      */
     var createView = function (name, domRoot) {
-        views[name] = new GCODE.view(domRoot);
+        views[name] = new GCODE.view(domRoot, config, events);
     };
 
     /**
@@ -84,7 +84,7 @@ GCODE.app = (function () {
             config = new GCODE.config();
             ui = new GCODE.ui(this, events);
             repository = new GCODE.repository();
-            createView("default", $("#gcode"));
+            createView("default", $("#viewContainer"));
         },
 
         /**
@@ -113,10 +113,18 @@ GCODE.app = (function () {
         /**
          * Returns the GCode repository
          *
-         * @returns GCODE.repository
+         * @returns {GCODE.repository}
          */
         getRepository: function () {
             return repository;
+        },
+
+        /**
+         * Returns the GCode app event manager.
+         * @returns {GCODE.events}
+         */
+        getEventManager: function() {
+            return events;
         },
 
         /**
