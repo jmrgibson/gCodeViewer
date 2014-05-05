@@ -38,6 +38,17 @@ body {
   width: 100%;
   position: relative;
   @include box-sizing(border-box);
+
+  #view1, #view2 {
+    width: 50%;
+    height: 100%;
+    float: left;
+    background-color: #EEE;
+    overflow: hidden;
+    @include box-sizing(border-box);
+  }
+  #view1 { border-right: 1px solid #CCC; }
+  #view2 { border-left: 1px solid #CCC; }
 }
 
 

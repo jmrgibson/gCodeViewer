@@ -528,6 +528,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
         startCanvas();
         initialized = true;
         ctx.translate((canvas[0].width - gridSizeX*zoomFactor)/2,gridSizeY*zoomFactor+(canvas[0].height - gridSizeY*zoomFactor)/2);
+        reRender();
     }();
     return this;
 });

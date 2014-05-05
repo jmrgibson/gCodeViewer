@@ -327,6 +327,30 @@ GCODE.ui = (function (app, eventManager) {
         // TODO: set initial form values from config
     }
 
+    var initNavigation = function() {
+        var removeActive = function() {
+            $('a[href="#tab2d"], a[href="#tab3d"], a[href="#tabGCode"]').parent("li.active").removeClass("active");
+        }
+        $('a[href="#tab2d"]').click(function (e) {
+            events.navigation.show2d.dispatch();
+            removeActive();
+            $('a[href="#tab2d"]').parent("li").addClass("active");
+            return e.preventDefault();
+        });
+        $('a[href="#tab3d"]').click(function (e) {
+            events.navigation.show3d.dispatch();
+            removeActive();
+            $('a[href="#tab3d"]').parent("li").addClass("active");
+            return e.preventDefault();
+        });
+        $('a[href="#tabGCode"]').click(function (e) {
+            events.navigation.showGCode.dispatch();
+            removeActive();
+            $('a[href="#tabGCode"]').parent("li").addClass("active");
+            return e.preventDefault();
+        });
+    }
+
 
     /**
      * Initialize UI.
@@ -337,6 +361,7 @@ GCODE.ui = (function (app, eventManager) {
         initFileSelect();
         progress.reset();
         initWorker();
+        initNavigation();
     }
     init();
 

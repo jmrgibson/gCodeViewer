@@ -84,7 +84,8 @@ GCODE.app = (function () {
             config = new GCODE.config();
             ui = new GCODE.ui(this, events);
             repository = new GCODE.repository();
-            createView("default", $("#viewContainer"));
+            createView("view1", $("#view1"));
+            createView("view2", $("#view2"));
         },
 
         /**
@@ -106,7 +107,7 @@ GCODE.app = (function () {
             var that = this;
             var reader = new GCODE.reader(filename, gCode, events, config, function() {
                 repository.save(reader);
-                that.display(filename, "default");
+                that.display(filename, "view1");
             });
         },
 
