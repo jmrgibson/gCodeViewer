@@ -121,6 +121,15 @@ GCODE.app = (function () {
         },
 
         /**
+         * Returns the names of all views.
+         *
+         * @returns {String[]}
+         */
+        getViews: function() {
+            return Object.keys(views);
+        },
+
+        /**
          * Returns the GCode app event manager.
          * @returns {GCODE.events}
          */

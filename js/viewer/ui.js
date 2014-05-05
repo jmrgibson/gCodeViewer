@@ -24,6 +24,22 @@ GCODE.ui = (function (app, eventManager) {
     var worker;
 
     /**
+     * Holds some underscore templates
+     */
+    var templates = {
+        view: _.template('\
+            <div class="form-group">\
+                <label for="view-<%= id %>"><%= name %></label>\
+                <select class="form-control" data-view-id="<%= id %>">\
+                    <% _.each(options, function(option) { %>\
+                        <option value="<%= option.value %>"><%= option.name %></option>\
+                    <% }); %>\
+                </select>\
+            </div>\
+        ')
+    };
+
+    /**
      * Dispalys a notification message.
      *
      * @param {string} message the message to display
@@ -327,6 +343,9 @@ GCODE.ui = (function (app, eventManager) {
         // TODO: set initial form values from config
     }
 
+    /**
+     * Initializes navigation buttons
+     */
     var initNavigation = function() {
         var removeActive = function() {
             $('a[href="#tab2d"], a[href="#tab3d"], a[href="#tabGCode"]').parent("li.active").removeClass("active");
@@ -351,6 +370,45 @@ GCODE.ui = (function (app, eventManager) {
         });
     }
 
+    /**
+     * Initializes the display manager
+     */
+    var initDiplayManager = function() {
+        // gcodes
+        var gcodes = [{ name: "--- Please choose a GCode to display ---", value: "" }];
+        _.each(app.getRepository().list(), function(gcode) {
+            gcodes.push({
+                name: gcode,
+                value: gcode
+            });
+        });
+
+        // views
+        var modalHtml = "";
+        _.each(app.getViews(), function(view) {
+            var id = view.replace(/\W+/ig, '');
+            modalHtml += templates.view({
+                name: view,
+                id: id,
+                options: gcodes
+            });
+        });
+        $("#display-manager .modal-body").html(modalHtml);
+
+        // select change handler
+        $("#display-manager select").change(function() {
+            var gcode = $(this).val();
+            var view = $(this).attr("data-view-id");
+            console.log(view);
+            console.log(gcode);
+            if (gcode != "" && view != "") {
+                app.display(gcode, view);
+                app.getEventManager().navigation.show2d.dispatch();
+            } else {
+                notify.warning("Please choose valid view and valid GCode");
+            }
+        });
+    }
 
     /**
      * Initialize UI.
@@ -362,6 +420,8 @@ GCODE.ui = (function (app, eventManager) {
         progress.reset();
         initWorker();
         initNavigation();
+
+        $('a[data-target="#display-manager"]').click(initDiplayManager);
     }
     init();
 
