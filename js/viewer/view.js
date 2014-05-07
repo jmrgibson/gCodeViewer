@@ -49,8 +49,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
 
     /**
      * The lines of GCode of the current layer
-     *
-     * @type {*}
+     * @type {{first: number, last: number}}
      */
     var gCodeLines = {first: 0, last: 0};
 
@@ -87,10 +86,10 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
 
         /** tab content for 2d rendering */
         tab2d: _.template('\
-            <div class="toolbar toolbar-right" class="layer-info" style="display: none;">\
+            <div class="toolbar toolbar-right layer-info">\
                 <div class="panel panel-default">\
                     <div class="panel-heading">\
-                        Layer info\
+                        <i class="fa fa-chevron-circle-up"></i> Layer info\
                         <span class="label label-primary">\
                             <span class="curLayer">0</span> / <span class="maxLayer"></span>\
                         </span>\
@@ -177,7 +176,6 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
         var speedIndex = 0;
         var colorLen = renderOptions['colorLineLen'];
         var output = [];
-
         if (typeof(layerSpeeds) === 'undefined') {
             return output;
         }
@@ -191,6 +189,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
             }
             output.push(createOutput(layerSpeeds[i], speedIndex));
         }
+        return output;
     }
 
     /**
@@ -335,11 +334,11 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
 
         // extrusion speeds
         var exSpeed;
-        if (renderOptions['speedDisplayType'] === displayType.speed) {
+        if (renderOptions['speedDisplayType'] == displayType.speed) {
             exSpeed = prepareExPerSec(z, renderOptions);
-        } else if (renderOptions['speedDisplayType'] === displayType.expermm) {
+        } else if (renderOptions['speedDisplayType'] == displayType.expermm) {
             exSpeed = prepareExPerMMInfo(z, renderOptions);
-        } else if (renderOptions['speedDisplayType'] === displayType.volpersec) {
+        } else if (renderOptions['speedDisplayType'] == displayType.volpersec) {
             exSpeed = prepareVolPerSecInfo(z, renderOptions);
         }
         root.find(".layer-info .extrudeSpeeds").html(_toHtml(exSpeed, templates.colorBox));
@@ -354,43 +353,12 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
     };
 
     /**
-     * Update line colors in GCode viewer to highlight GCode of current layer
-     *
-     * @param toggle
+     * Updates the scrollbars
+     * @private
      */
-    var setLinesColor = function(toggle){
-        for(var i=gCodeLines.first;i<gCodeLines.last; i++){
-            if(toggle){
-                myCodeMirror.setLineClass(Number(i), null, "activeline");
-            }else{
-                myCodeMirror.setLineClass(Number(i), null, null);
-            }
-        }
-    };
-
-    /**
-     * Initializes the sliders of the 2D render pane
-     */
-        var self = this;
-    var init2dEventHandlers = function() {
-        // init 2d renderer
-        var canvasRoot = root.find(".render2d");
-        renderer2d = new GCODE.renderer(canvasRoot, config, self, events);
-
+    var _updateScrollbar = function() {
         // TODO: fix horizontal slider
-        var handle;
         // sliderHor = $( "#slider-horizontal" );
-
-        var onLayerChange = function(val){
-            var progress = renderer2d.getLayerNumSegments(val) - 1;
-            renderer2d.render(val, 0, progress);
-            // sliderHor.slider({max: progress, values: [0,progress]});
-            setLinesColor(false); //clear current selection
-            // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
-            gCodeLines = gcode.getGCodeLines(val, 0, 1);
-            setLinesColor(true); // highlight lines
-            printLayerInfo(val);
-        };
 
         var maxLayer = renderer2d.getModelNumLayers() - 1;
         root.find(".layer-info .maxLayer").text(maxLayer);
@@ -411,7 +379,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
         });
         sliderVer.on("slide", function( event ) {
             if (Object.prototype.toString.call( event.value ) === "[object Number]") {
-                onLayerChange(event.value);
+                events.view.renderer2d.toLayer.dispatch(name, event.value);
             }
         });
 
@@ -431,36 +399,129 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
 //                GCODE.renderer.render(sliderVer.slider("value"), ui.values[0], ui.values[1]);
 //            }
 //        });
+    }
 
-        // function to go one layer up and adjusting the slider value
-        var oneLayerUpIfPossible = function() {
-            if (sliderVer.slider('getValue') < maxLayer) {
-                sliderVer.slider('setValue', sliderVer.slider('getValue') + 1);
-                onLayerChange(sliderVer.slider('getValue'));
+    /**
+     * Only forwards events if current view is affected.
+     *
+     * @param {Function} handler to forward event to
+     * @returns {Function}
+     * @private
+     */
+    var _ifAffected = function(handler) {
+        return function (viewName) {
+            if (gcode == null) {
+                return;
+            }
+            if (viewName == name || true === config.synced.get() || root.is(":hover")) {
+                handler.apply(handler, arguments);
             }
         }
-        // function to go one layer down and adjusting the slider value
-        var oneLayerDownIfPossible = function() {
-            if (sliderVer.slider('getValue') > 0) {
-                sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
-                onLayerChange(sliderVer.slider('getValue'));
-            }
-        }
+    }
 
-        // bind arrow keys to change layer
-        window.onkeydown = function (event) {
-            if (event.keyCode === 38 || event.keyCode === 33) {
-                oneLayerUpIfPossible();
-            } else if (event.keyCode === 40 || event.keyCode === 34) {
-                oneLayerDownIfPossible();
-            }
-            return event.stopPropagation()
-        }
-        // bind slider control buttons to change layer
-        root.find(".tab2d .scrollbar-plus").mousedown(oneLayerUpIfPossible);
-        root.find(".tab2d .scrollbar-minus").mousedown(oneLayerDownIfPossible);
+    /**
+     * Function to be called if the layer changes
+     *
+     * @param {int} layer number
+     */
+    var onLayerChange = function(layer){
+        var progress = renderer2d.getLayerNumSegments(layer) - 1;
+        renderer2d.render(layer, 0, progress);
+        // sliderHor.slider({max: progress, values: [0,progress]});
+        // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
+        gCodeLines = gcode.getGCodeLines(layer, 0, 1);
+        printLayerInfo(layer);
     };
 
+    /**
+     * Event handler to go one layer up and adjusting the slider value
+     */
+    var oneLayerUpIfPossible = function() {
+        var maxLayer = renderer2d.getModelNumLayers() - 1;
+        if (sliderVer.slider('getValue') < maxLayer) {
+            sliderVer.slider('setValue', sliderVer.slider('getValue') + 1);
+            onLayerChange(sliderVer.slider('getValue'));
+        }
+    }
+
+    /**
+     * Event handler to go one layer down and adjusting the slider value
+     */
+    var oneLayerDownIfPossible = function() {
+        var maxLayer = renderer2d.getModelNumLayers() - 1;
+        if (sliderVer.slider('getValue') > 0) {
+            sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
+            onLayerChange(sliderVer.slider('getValue'));
+        }
+    }
+
+    // register event listeners.
+    events.view.renderer2d.moveLayerUp.add(_ifAffected(oneLayerUpIfPossible));
+    events.view.renderer2d.moveLayerDown.add(_ifAffected(oneLayerDownIfPossible));
+    events.view.renderer2d.toLayer.add(_ifAffected(function(viewName, layerNum) {
+        onLayerChange(layerNum);
+    }));
+
+    /**
+     * To be invoked if the gCode reader changes
+     */
+    var gCodeChanged = function() {
+        if (gcode == null) {
+            root.find(".scrollbar").hide();
+            root.find(".layer-info").hide();
+        } else {
+            _updateScrollbar();
+            onLayerChange(0);
+            root.find(".scrollbar").show();
+            root.find(".layer-info").show();
+        }
+    };
+
+    /**
+     * Initializes the sliders of the 2D render pane
+     */
+    var self = this;
+    var init2dEventHandlers = function() {
+        // init 2d renderer
+        var canvasRoot = root.find(".render2d");
+        renderer2d = new GCODE.renderer(canvasRoot, config, self, events);
+
+        /**
+         * Used to send a signal from a native event handler.
+         *
+         * @param {signals.Signal} signal
+         * @returns {Function} dispatcher
+         */
+        var sendSignal = function(signal) {
+            return function(e) {
+                signal.dispatch(name, e);
+            }
+        }
+
+        // bind slider control buttons to change layer
+        root.find(".tab2d .scrollbar-plus").mousedown(sendSignal(events.view.renderer2d.moveLayerUp));
+        root.find(".tab2d .scrollbar-minus").mousedown(sendSignal(events.view.renderer2d.moveLayerDown));
+
+        // layer info event handler
+        root.find(".layer-info .panel-heading").click(function() {
+            var active = !root.find(".layer-info .panel-body").hasClass("hide");
+
+            var iconOpen = "fa-chevron-circle-down";
+            var iconClose = "fa-chevron-circle-up";
+
+            if (active) {
+                root.find(".layer-info ." + iconClose).removeClass(iconClose).addClass(iconOpen);
+                root.find(".layer-info .panel-body").addClass("hide");
+            } else {
+                root.find(".layer-info ." + iconOpen).removeClass(iconOpen).addClass(iconClose);
+                root.find(".layer-info .panel-body").removeClass("hide");
+            }
+        })
+    };
+
+    /**
+     * Hides the active content tab within the view
+     */
     var hideActiveTab = function() {
         root.find(".tab.active").removeClass("active");
     }
@@ -533,6 +594,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
     this.load = function (reader) {
         gcode = reader;
         renderer2d.load(reader);
+        gCodeChanged();
 //            if (showGCode) {
 //                myCodeMirror.setValue(theFile.target.result);
 //            } else {
@@ -543,6 +605,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
     var __construct = function() {
         root.html(createViewHtml());
         init2dEventHandlers();
+        gCodeChanged();
     }();
     return this;
 });

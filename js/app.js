@@ -86,6 +86,7 @@ GCODE.app = (function () {
             repository = new GCODE.repository();
             createView("view1", $("#view1"));
             createView("view2", $("#view2"));
+            events.navigation.show2d.dispatch();
         },
 
         /**

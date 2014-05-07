@@ -75,7 +75,13 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     var extrusionSpeeds = [];
     var extrusionSpeedsByLayer = {};
 
-
+    /**
+     * Rerenders the canvas.
+     *
+     * @param {integer} layerNum layer to render
+     * @param {double} fromProgress
+     * @param {double} toProgress
+     */
     var reRender = function(layerNum, fromProgress, toProgress) {
         // fetch args from store if none are passed
         if (null ==layerNum) {
@@ -122,6 +128,17 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
             drawLayer(layerNum + 1, 0, getLayerNumSegments(layerNum + 1), true);
         }
         drawLayer(layerNum, fromProgress, toProgress);
+    };
+
+    /**
+     * Listener for config changed events to update the local configuration
+     */
+    var updateLocalConfig = function() {
+        var options = config.getOptions();
+        for (var key in  options) {
+            renderOptions[key] = options[key];
+        };
+        reRender();
     };
 
     function trackTransforms(ctx){
@@ -291,6 +308,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     var getModelNumLayers = function(){
         return model?model.length:1;
     };
+
     var getLayerNumSegments = function(layer){
         if(model){
             return model[layer]?model[layer].length:1;
@@ -583,7 +601,8 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
         startCanvas();
         initialized = true;
         ctx.translate((canvas[0].width - gridSizeX*zoomFactor)/2,gridSizeY*zoomFactor+(canvas[0].height - gridSizeY*zoomFactor)/2);
-        reRender();
+        config.configChangedEvent.add(updateLocalConfig);
+        updateLocalConfig();
     }();
     return this;
 });
