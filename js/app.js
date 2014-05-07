@@ -50,7 +50,7 @@ GCODE.app = (function () {
      * @param domRoot the DOM root element
      */
     var createView = function (name, domRoot) {
-        views[name] = new GCODE.view(domRoot, config, events);
+        views[name] = new GCODE.view(name, domRoot, config, events);
     };
 
     /**

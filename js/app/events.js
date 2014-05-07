@@ -15,6 +15,17 @@ GCODE.events = (function () {
         /** Used to move one layer down in the 2D viewer */
         moveLayerDown: new Signal(),
 
+        /** Used to exchange view events */
+        view: {
+            /** Used to exchange 2d renderer specific view events */
+            renderer2d: {
+                mouseDown: new Signal(),
+                mouseMove: new Signal(),
+                mouseUp: new Signal(),
+                scroll: new Signal()
+            }
+        },
+
         /** Used to change the current active view pane */
         navigation: {
             /** Event handler used to switch to 2d view */

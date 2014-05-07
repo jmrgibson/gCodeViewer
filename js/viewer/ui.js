@@ -422,6 +422,9 @@ GCODE.ui = (function (app, eventManager) {
         initNavigation();
 
         $('a[data-target="#display-manager"]').click(initDiplayManager);
+        $("#sync").click(function() {
+            app.getConfig().synced.set(!$(this).hasClass("active"));
+        });
     }
     init();
 

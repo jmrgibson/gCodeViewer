@@ -23,7 +23,8 @@ GCODE.config = (function () {
         actualWidth: false,
         renderAnalysis: false,
         speedDisplayType: 1,
-        showGCode: true
+        showGCode: true,
+        synced: false
     };
 
     /**
@@ -197,6 +198,9 @@ GCODE.config = (function () {
 
         /** Show GCode in CodeMirror tab */
         showGCode: new Config("showGCode", boolean),
+
+        /** Whether or not to synchronize UI events between views */
+        synced: new Config("synced", boolean),
 
         renderAnalysis: new Config("renderAnalysis", boolean)
     };

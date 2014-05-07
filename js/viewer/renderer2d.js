@@ -6,7 +6,7 @@
  */
 
 
-GCODE.renderer = (function(canvasRoot, config, bindToView){
+GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
 // ***** PRIVATE ******
 
     /**
@@ -14,6 +14,13 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
      * @type {GCODE.view}
      */
     var view = bindToView;
+
+    /**
+     * Holds the GCode app event manager
+     *
+     * @type {GCODE.events}
+     */
+    var events = eventManager;
 
     /**
      * Reader of the currently loaded GCode.
@@ -173,9 +180,70 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
         }
     }
 
+    /**
+     * Only forwards events if current renderer is affected.
+     *
+     * @param {Function} handler to forward event to
+     * @returns {Function}
+     * @private
+     */
+    var _affected = function (handler) {
+        return function (viewName, evt) {
+            if (viewName == view.getName() || true === config.synced.get()) {
+                handler(viewName, evt);
+            }
+        }
+    }
 
+    // mouseDown event handler
+    events.view.renderer2d.mouseDown.add(_affected(function(viewName, evt) {
+        document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
+        lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
+        lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
+        dragStart = ctx.transformedPoint(lastX,lastY);
+        dragged = false;
+    }));
+
+    // mouseMove event handler
+    events.view.renderer2d.mouseMove.add(_affected(function(viewName, evt) {
+        lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
+        lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
+        dragged = true;
+        if (dragStart){
+            var pt = ctx.transformedPoint(lastX,lastY);
+            ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
+            reRender();
+        }
+    }));
+
+    // mouseUp event handler
+    events.view.renderer2d.mouseUp.add(_affected(function(viewName, evt) {
+        dragStart = null;
+        if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
+    }));
+
+    // scroll event handler
+    var zoom = function(clicks){
+        var pt = ctx.transformedPoint(lastX,lastY);
+        ctx.translate(pt.x,pt.y);
+        var factor = Math.pow(scaleFactor,clicks);
+        ctx.scale(factor,factor);
+        ctx.translate(-pt.x,-pt.y);
+        reRender();
+    };
+    events.view.renderer2d.scroll.add(_affected(function(viewName, evt){
+        var delta;
+        if(evt.detail<0 || evt.wheelDelta>0)delta=zoomFactorDelta;
+        else delta=-1*zoomFactorDelta;
+        if (delta) zoom(delta);
+        return evt.preventDefault() && false;
+    }));
+
+
+    /**
+     * Initialize canvas and bind event handlers.
+     */
     var startCanvas = function() {
-        // Проверяем понимает ли браузер canvas
         if (!canvas[0].getContext) {
             throw "exception";
         }
@@ -192,45 +260,25 @@ GCODE.renderer = (function(canvasRoot, config, bindToView){
         ctx.lineCap = 'round';
         trackTransforms(ctx);
 
-        canvas[0].addEventListener('mousedown',function(evt){
-            document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
-            lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
-            lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
-            dragStart = ctx.transformedPoint(lastX,lastY);
-            dragged = false;
-        },false);
-        canvas[0].addEventListener('mousemove',function(evt){
-            lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
-            lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
-            dragged = true;
-            if (dragStart){
-                var pt = ctx.transformedPoint(lastX,lastY);
-                ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
-                reRender();
-            }
-        },false);
-        canvas[0].addEventListener('mouseup',function(evt){
-            dragStart = null;
-            if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
-        },false);
-        var zoom = function(clicks){
-            var pt = ctx.transformedPoint(lastX,lastY);
-            ctx.translate(pt.x,pt.y);
-            var factor = Math.pow(scaleFactor,clicks);
-            ctx.scale(factor,factor);
-            ctx.translate(-pt.x,-pt.y);
-            reRender();
-        };
-        var handleScroll = function(evt){
-            var delta;
-            if(evt.detail<0 || evt.wheelDelta>0)delta=zoomFactorDelta;
-            else delta=-1*zoomFactorDelta;
-            if (delta) zoom(delta);
-            return evt.preventDefault() && false;
-        };
-        canvas[0].addEventListener('DOMMouseScroll',handleScroll,false);
-        canvas[0].addEventListener('mousewheel',handleScroll,false);
+        /**
+         * Returns a function that when invoked dispatches the given signal with the given event and the bound to views name.
+         *
+         * Can be used to bind to any event listener.
+         *
+         * @param {signals.Signal} signal
+         * @returns {Function}
+         */
+        var sendSignal = function(signal) {
+            return function(evt) {
+                signal.dispatch(view.getName(), evt);
+            };
+        }
 
+        canvas[0].addEventListener('mousedown', sendSignal(events.view.renderer2d.mouseDown), false);
+        canvas[0].addEventListener('mousemove', sendSignal(events.view.renderer2d.mouseMove), false);
+        canvas[0].addEventListener('mouseup', sendSignal(events.view.renderer2d.mouseUp), false);
+        canvas[0].addEventListener('DOMMouseScroll', sendSignal(events.view.renderer2d.scroll), false);
+        canvas[0].addEventListener('mousewheel', sendSignal(events.view.renderer2d.scroll), false);
     };
 
     var getModelNumLayers = function(){

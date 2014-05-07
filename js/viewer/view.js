@@ -3,7 +3,13 @@
  * Date: 03/30/14
  * Time: 5:54 PM
  */
-GCODE.view = (function (domRoot, appConfig, eventManager) {
+GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
+
+    /**
+     * The views name.
+     * @type {string}
+     */
+    var name = viewName;
 
     /**
      * Holds the DOM root node of the view as jQuery selector
@@ -369,7 +375,7 @@ GCODE.view = (function (domRoot, appConfig, eventManager) {
     var init2dEventHandlers = function() {
         // init 2d renderer
         var canvasRoot = root.find(".render2d");
-        renderer2d = new GCODE.renderer(canvasRoot, config, self);
+        renderer2d = new GCODE.renderer(canvasRoot, config, self, events);
 
         // TODO: fix horizontal slider
         var handle;
@@ -492,6 +498,15 @@ GCODE.view = (function (domRoot, appConfig, eventManager) {
     events.navigation.show2d.add(this.navigation.show2d);
     events.navigation.show3d.add(this.navigation.show3d);
     events.navigation.showGCode.add(this.navigation.showGCode);
+
+    /**
+     * Returns the views name.
+     *
+     * @returns {string}
+     */
+    this.getName = function() {
+        return name;
+    }
 
     /**
      * Returns the height of this view
