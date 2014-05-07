@@ -422,8 +422,19 @@ GCODE.ui = (function (app, eventManager) {
         initNavigation();
 
         $('a[data-target="#display-manager"]').click(initDiplayManager);
+
+        // set sync button
         $("#sync").click(function() {
             app.getConfig().synced.set(!$(this).hasClass("active"));
+        });
+
+        // dispatch key presses
+        $("html").keydown(function(event) {
+            if (event.keyCode === 38 || event.keyCode === 33) {
+                events.view.renderer2d.moveLayerUp.dispatch("", event);
+            } else if (event.keyCode === 40 || event.keyCode === 34) {
+                events.view.renderer2d.moveLayerDown.dispatch("", event);
+            }
         });
     }
     init();
