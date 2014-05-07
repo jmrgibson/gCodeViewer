@@ -196,46 +196,53 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     }
 
     // mouseDown event handler
-    events.view.renderer2d.mouseDown.add(_affected(function(viewName, evt) {
+    events.view.renderer2d.mouseDown.add(_affected(function (viewName, evt) {
         document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
         lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
         lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
-        dragStart = ctx.transformedPoint(lastX,lastY);
+        dragStart = ctx.transformedPoint(lastX, lastY);
         dragged = false;
     }));
 
     // mouseMove event handler
-    events.view.renderer2d.mouseMove.add(_affected(function(viewName, evt) {
+    events.view.renderer2d.mouseMove.add(_affected(function (viewName, evt) {
         lastX = evt.offsetX || (evt.pageX - canvas[0].offsetLeft);
         lastY = evt.offsetY || (evt.pageY - canvas[0].offsetTop);
         dragged = true;
-        if (dragStart){
-            var pt = ctx.transformedPoint(lastX,lastY);
-            ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
+        if (dragStart) {
+            var pt = ctx.transformedPoint(lastX, lastY);
+            ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y);
             reRender();
         }
     }));
 
     // mouseUp event handler
-    events.view.renderer2d.mouseUp.add(_affected(function(viewName, evt) {
+    events.view.renderer2d.mouseUp.add(_affected(function (viewName, evt) {
         dragStart = null;
-        if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
+        if (!dragged) {
+            zoom(evt.shiftKey ? -1 : 1);
+        }
     }));
 
     // scroll event handler
-    var zoom = function(clicks){
-        var pt = ctx.transformedPoint(lastX,lastY);
-        ctx.translate(pt.x,pt.y);
-        var factor = Math.pow(scaleFactor,clicks);
-        ctx.scale(factor,factor);
-        ctx.translate(-pt.x,-pt.y);
+    var zoom = function (clicks) {
+        var pt = ctx.transformedPoint(lastX, lastY);
+        ctx.translate(pt.x, pt.y);
+        var factor = Math.pow(scaleFactor, clicks);
+        ctx.scale(factor, factor);
+        ctx.translate(-pt.x, -pt.y);
         reRender();
     };
-    events.view.renderer2d.scroll.add(_affected(function(viewName, evt){
+    events.view.renderer2d.scroll.add(_affected(function (viewName, evt) {
         var delta;
-        if(evt.detail<0 || evt.wheelDelta>0)delta=zoomFactorDelta;
-        else delta=-1*zoomFactorDelta;
-        if (delta) zoom(delta);
+        if (evt.detail < 0 || evt.wheelDelta > 0) {
+            delta = zoomFactorDelta;
+        } else {
+            delta = -1 * zoomFactorDelta;
+        }
+        if (delta) {
+            zoom(delta);
+        }
         return evt.preventDefault() && false;
     }));
 
