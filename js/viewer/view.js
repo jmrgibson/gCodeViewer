@@ -496,7 +496,7 @@ GCODE.view = (function (viewName, domRoot, app) {
             if (gcode == null) {
                 return;
             }
-            if (viewName == name || true === config.synced.get() || root.is(":hover")) {
+            if (viewName == name || true === config.synced.get() || true === config.diff.get() || root.is(":hover")) {
                 handler.apply(handler, arguments);
             }
         }
