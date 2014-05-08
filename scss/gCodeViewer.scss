@@ -17,8 +17,9 @@ body {
 .navbar li a i {
   margin-right: 5px;
 }
-#sync {
+#sync, #diff {
   margin-top: 8px;
+  margin-left: 10px;
 }
 
 #app {
@@ -46,18 +47,26 @@ body {
     width: 50%;
     height: 100%;
     float: left;
-    background-color: #EEE;
+    background-color: transparent;
     overflow: hidden;
     @include box-sizing(border-box);
   }
   #view1 { border-right: 1px solid #CCC; }
   #view2 { border-left: 1px solid #CCC; }
+
+  &.diff {
+    #view1, #view2 {
+      position: absolute;
+      width: 100%;
+      float: none;
+      border: none;
+    }
+  }
 }
 
 
 // single GCode app view
 .view {
-  background: #ffffff;
   height: 100%;
   margin-top: 0px;
   width: 100%;

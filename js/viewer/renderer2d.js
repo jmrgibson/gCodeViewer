@@ -201,12 +201,14 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
      * Only forwards events if current renderer is affected.
      *
      * @param {Function} handler to forward event to
+     * @param {Function} additionalPredicate if you need additional checks
      * @returns {Function}
      * @private
      */
-    var _affected = function (handler) {
+    var _affected = function (handler, additionalPredicate) {
         return function (viewName, evt) {
-            if (viewName == view.getName() || true === config.synced.get()) {
+            if (viewName == view.getName() || true === config.synced.get()
+                || (additionalPredicate != undefined && additionalPredicate(viewName, evt))) {
                 handler(viewName, evt);
             }
         }
@@ -261,6 +263,8 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
             zoom(delta);
         }
         return evt.preventDefault() && false;
+    }, function() {
+        return true === config.diff.get()
     }));
 
 
@@ -534,6 +538,25 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     this.render = function(layerNum, fromProgress, toProgress){
         reRender(layerNum, fromProgress, toProgress);
     };
+
+    /**
+     * Resizes the canvas to the actual view width.
+     */
+    this.resizeCanvas = function() {
+        if (!canvas[0].getContext) {
+            throw "exception";
+        }
+        canvas.attr("width", view.getWidth());
+        canvas.attr("height", view.getHeight());
+        ctx = canvas[0].getContext('2d');
+        ctxHeight = canvas[0].height;
+        ctxWidth = canvas[0].width;
+        lastX = ctxWidth / 2;
+        lastY = ctxHeight / 2;
+        trackTransforms(ctx);
+        ctx.translate((canvas[0].width - gridSizeX*zoomFactor)/2,gridSizeY*zoomFactor+(canvas[0].height - gridSizeY*zoomFactor)/2);
+        reRender();
+    }
 
     /**
      * Loads the GCode reader

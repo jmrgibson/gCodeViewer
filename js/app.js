@@ -134,6 +134,15 @@ GCODE.app = (function () {
     };
 
     /**
+     * Resizes all views.
+     */
+    this.resize = function() {
+        _.values(views).forEach(function(view) {
+            view.resize();
+        });
+    };
+
+    /**
      * Returns the GCode app event manager.
      * @returns {GCODE.events}
      */

@@ -24,7 +24,8 @@ GCODE.config = (function () {
         speedDisplayType: 1,
         showGCode: true,
         synced: false,
-        drawGrid: true
+        drawGrid: true,
+        diff: false
     };
 
     /** Stores the default values */
@@ -241,6 +242,9 @@ GCODE.config = (function () {
 
     /** Whether or not to draw the grid */
     this.drawGrid = new Config("drawGrid", boolean, false);
+
+    /** Whether or not the current view is in diff mode */
+    this.diff = new Config("diff", boolean, false);
 
     this.renderAnalysis = new Config("renderAnalysis", boolean, false);
 

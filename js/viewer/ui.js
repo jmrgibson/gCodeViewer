@@ -447,6 +447,19 @@ GCODE.ui = (function (app, eventManager) {
             app.getConfig().synced.set(!$(this).hasClass("active"));
         });
 
+        // diff button
+        $("#diff").click(function() {
+            var diff = !$(this).hasClass("active");
+            if (diff) {
+                $("#viewContainer").addClass("diff");
+            } else {
+                $("#viewContainer").removeClass("diff");
+            }
+            app.getConfig().diff.set(diff);
+            app.resize();
+        });
+
+        // set preferences to default
         $("#preferences-to-defaults").click(function() {
             app.getConfig().toDefaults();
             notify.info("Default preferences loaded.");
@@ -462,6 +475,11 @@ GCODE.ui = (function (app, eventManager) {
                 event.preventDefault();
                 takeScreenshot();
             }
+        });
+
+        // window resize
+        $(window).resize(function() {
+            app.resize();
         });
     }
     init();

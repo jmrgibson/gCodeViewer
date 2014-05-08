@@ -700,7 +700,14 @@ GCODE.view = (function (viewName, domRoot, app) {
      */
     this.getRoot = function() {
         return domRoot;
-    }
+    };
+
+    /**
+     * Resizes the view.
+     */
+    this.resize = function() {
+        renderer2d.resizeCanvas();
+    };
 
     /**
      * Loads a GCode into this view
