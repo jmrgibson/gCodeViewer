@@ -6,7 +6,6 @@
 
 GCODE.ui = (function(){
     var reader;
-    var myCodeMirror;
     var showGCode = false;
 
 //    var worker;
@@ -107,14 +106,6 @@ GCODE.ui = (function(){
             GCODE.renderer.render(0,0);
 
             console.log("Application initialized");
-
-            // codemirror
-            myCodeMirror = new CodeMirror( document.getElementById('gCodeContainer'), {
-                lineNumbers: true,
-                gutters: ['CodeMirror-linenumbers']
-            });
-            myCodeMirror.setSize("100%","100%");
-            chooseAccordion('fileAccordionTab');
 
             (function() {
                 var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
