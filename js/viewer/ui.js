@@ -316,16 +316,38 @@ GCODE.ui = (function (app, eventManager) {
     };
 
     /**
-     * Initializes the perferences page
+     * Binds the event handlers for the preferences form.
+     *
+     * @param {boolean} bind pass true to bind, false to unbind
      */
-    var initPreferences = function() {
-        // bind config changed handlers
+    var preferencesFormHandlers = function(bind) {
         $("[data-config-bind]").each(function() {
-            $(this).change(handlePreferencesChanged);
+            if (bind) {
+                $(this).bind("change", handlePreferencesChanged);
+            } else {
+                $(this).unbind("change", handlePreferencesChanged);
+            }
         });
-
-        // TODO: set initial form values from config
     }
+
+    /**
+     * Writes the config values to the form elements.
+     */
+    var updatePreferencesForm = function() {
+        preferencesFormHandlers(false);
+        var options = app.getConfig().getOptions();
+        for (var key in options) {
+            var el = $("[data-config-bind='" + key + "']");
+            if (el.is("[type='text']")) {
+                el.val(options[key]);
+            } else if (el.is("[type='checkbox']")) {
+                el.prop("checked", options[key]);
+            } else if (el.is("[type='radio']")) {
+                el.filter("[value='" + options[key] + "']").click();
+            }
+        }
+        preferencesFormHandlers(true);
+    };
 
     /**
      * Initializes navigation buttons
@@ -392,15 +414,21 @@ GCODE.ui = (function (app, eventManager) {
      */
     var init = function () {
         checkCapabilities();
-        initPreferences();
+        updatePreferencesForm();
         initFileSelect();
         progress.reset();
         initWorker();
         initNavigation();
+        app.getConfig().configChangedEvent.add(updatePreferencesForm);
 
         // set sync button
         $("#sync").click(function() {
             app.getConfig().synced.set(!$(this).hasClass("active"));
+        });
+
+        $("#preferences-to-defaults").click(function() {
+            app.getConfig().toDefaults();
+            notify.info("Default preferences loaded.");
         });
 
         // dispatch key presses

@@ -10,7 +10,6 @@ GCODE.config = (function () {
     var data = {
         sortLayers: false,
         purgeEmptyLayers: true,
-        analyzeModel: false,
         filamentType: "ABS",
         filamentDia: 1.75,
         nozzleDia: 0.4,
@@ -28,6 +27,9 @@ GCODE.config = (function () {
         drawGrid: true
     };
 
+    /** Stores the default values */
+    var defaults = _.omit(data);
+
     /**
      * Signal used to indicate that a config key has changed.
      *
@@ -36,14 +38,25 @@ GCODE.config = (function () {
     var configChanged = new signals.Signal();
 
     /**
+     * Holds an array of keys which should not be persisted.
+     * @type {String[]}
+     */
+    var doNotPersist = [];
+
+    /**
      * Creates a getter/setter class for a config member.
      *
      * @param {string} key
      * @param {function} filter the filter function
+     * @param {boolean} persist whether or not to persist the config value
      * @returns {{get: Function, set: Function}}
      * @constructor
      */
-    var Config = function (key, filter) {
+    var Config = function (key, filter, persist) {
+        persist = (persist == null) ? true : persist;
+        if (!persist) {
+            doNotPersist.push(key);
+        }
         return {
             get: function () {
                 return data[key];
@@ -117,95 +130,124 @@ GCODE.config = (function () {
         }
     }
 
-
-    return {
-
-        /**
-         * Event fired if any config key changed.
-         *
-         * Event has three parameters: (configKey, newValue, oldValue)
-         *
-         * @var {signals.Signal}
-         */
-        configChangedEvent: configChanged,
-
-        /**
-         * Returns all options.
-         *
-         * @returns {Object}
-         */
-        getOptions: function () {
-            var copy = {};
-            for (var key in data) {
-                copy[key] = data[key];
-            }
-            ;
-            return copy;
-        },
-
-        /**
-         * Sets a bunch of options.
-         *
-         * @param {Object} options
-         */
-        setOptions: function (options) {
-            var valid = true;
-            for (var key in options) {
-                if (this[key] !== undefined && this[key]["set"] !== undefined) {
-                    valid &= this[key].set(options[key]);
+    /** Loads the config from local storage */
+    var loadFromStorage = function() {
+        if (null != localStorage.getItem("GCODE.CONFIG")) {
+            var json = JSON.parse(localStorage.getItem("GCODE.CONFIG"));
+            for (var key in json) {
+                if (json[key] != null) {
+                    data[key] = json[key];
                 }
             }
-            return valid;
-        },
+        }
+    }
 
-        /** Sort layers by Z */
-        sortLayers: new Config("sortLayers", boolean),
+    /** Saves the config to local storage */
+    var saveToStorage = function() {
+        localStorage.setItem("GCODE.CONFIG", JSON.stringify(_.omit(data, doNotPersist)));
+    }
 
-        /** Hide empty layers */
-        purgeEmptyLayers: new Config("purgeEmptyLayers", boolean),
+    /**
+     * Event fired if any config key changed.
+     *
+     * Event has three parameters: (configKey, newValue, oldValue)
+     *
+     * @var {signals.Signal}
+     */
+    this.configChangedEvent = configChanged;
 
-        /** Move model to the center of the grid */
-        moveModel: new Config("moveModel", boolean),
-
-        /** Show different speeds with different colors  */
-        differentiateColors: new Config("differentiateColors", boolean),
-
-        /** Render lines slightly transparent */
-        alpha: new Config("alpha", boolean),
-
-        /** Show +1 layer */
-        showNextLayer: new Config("showNextLayer", boolean),
-
-        /** Show non-extrusion moves  */
-        showMoves: new Config("showMoves", boolean),
-
-        /** Show retracts and restarts */
-        showRetracts: new Config("showRetracts", boolean),
-
-        /** Emulate extrusion width  */
-        actualWidth: new Config("actualWidth", boolean),
-
-        /** Plastic diameter */
-        filamentDia: new Config("filamentDia", decimal),
-
-        /** Nozzle size */
-        nozzleDia: new Config("nozzleDia", decimal),
-
-        /** Plastic type */
-        filamentType: new Config("filamentType", options(["ABS", "PLA"])),
-
-        /** Speed display type, 1: mm/sec, 2: mm extrusion per mm move, 3: mm^3/sec */
-        speedDisplayType: new Config("speedDisplayType", chain(integer, options([1, 2, 3]))),
-
-        /** Show GCode in CodeMirror tab */
-        showGCode: new Config("showGCode", boolean),
-
-        /** Whether or not to synchronize UI events between views */
-        synced: new Config("synced", boolean),
-
-        /** Whether or not to draw the grid */
-        drawGrid: new Config("drawGrid", boolean),
-
-        renderAnalysis: new Config("renderAnalysis", boolean)
+    /**
+     * Returns all options.
+     *
+     * @returns {Object}
+     */
+    this.getOptions = function () {
+        var copy = {};
+        for (var key in data) {
+            copy[key] = data[key];
+        }
+        ;
+        return copy;
     };
+
+    /**
+     * Sets a bunch of options.
+     *
+     * @param {Object} options
+     */
+    this.setOptions = function (options) {
+        var valid = true;
+        for (var key in options) {
+            if (this[key] !== undefined && this[key]["set"] !== undefined) {
+                valid &= this[key].set(options[key]);
+            }
+        }
+        return valid;
+    };
+
+    /**
+     * Sets the config to default values.
+     */
+    this.toDefaults = function() {
+        for (var key in defaults) {
+            this[key].set(defaults[key]);
+        }
+    };
+
+    /** Sort layers by Z */
+    this.sortLayers = new Config("sortLayers", boolean);
+
+    /** Hide empty layers */
+    this.purgeEmptyLayers = new Config("purgeEmptyLayers", boolean);
+
+    /** Move model to the center of the grid */
+    this.moveModel = new Config("moveModel", boolean);
+
+    /** Show different speeds with different colors  */
+    this.differentiateColors = new Config("differentiateColors", boolean);
+
+    /** Render lines slightly transparent */
+    this.alpha = new Config("alpha", boolean);
+
+    /** Show +1 layer */
+    this.showNextLayer = new Config("showNextLayer", boolean);
+
+    /** Show non-extrusion moves  */
+    this.showMoves = new Config("showMoves", boolean);
+
+    /** Show retracts and restarts */
+    this.showRetracts = new Config("showRetracts", boolean);
+
+    /** Emulate extrusion width  */
+    this.actualWidth = new Config("actualWidth", boolean);
+
+    /** Plastic diameter */
+    this.filamentDia = new Config("filamentDia", decimal);
+
+    /** Nozzle size */
+    this.nozzleDia = new Config("nozzleDia", decimal);
+
+    /** Plastic type */
+    this.filamentType = new Config("filamentType", options(["ABS", "PLA"]));
+
+    /** Speed display type, 1: mm/sec, 2: mm extrusion per mm move, 3: mm^3/sec */
+    this.speedDisplayType = new Config("speedDisplayType", chain(integer, options([1, 2, 3])));
+
+    /** Show GCode in CodeMirror tab */
+    this.showGCode = new Config("showGCode", boolean);
+
+    /** Whether or not to synchronize UI events between views */
+    this.synced = new Config("synced", boolean, false);
+
+    /** Whether or not to draw the grid */
+    this.drawGrid = new Config("drawGrid", boolean, false);
+
+    this.renderAnalysis = new Config("renderAnalysis", boolean, false);
+
+    /** Init config */
+    var __construct = (function() {
+        loadFromStorage();
+        configChanged.add(saveToStorage);
+        saveToStorage();
+    })();
 });
