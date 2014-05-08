@@ -442,14 +442,14 @@ GCODE.ui = (function (app, eventManager) {
         initNavigation();
         app.getConfig().configChangedEvent.add(updatePreferencesForm);
 
-        // set sync button
+        // sync handling
         $("#sync").click(function() {
-            app.getConfig().synced.set(!$(this).hasClass("active"));
+            app.getConfig().synced.set(!$("#sync").hasClass("active"));
         });
 
-        // diff button
+        // diff handling
         $("#diff").click(function() {
-            var diff = !$(this).hasClass("active");
+            var diff = !$("#diff").hasClass("active");
             if (diff) {
                 $("#viewContainer").addClass("diff");
             } else {
@@ -468,12 +468,23 @@ GCODE.ui = (function (app, eventManager) {
         // dispatch key presses
         $("html").keydown(function(event) {
             if (event.keyCode === 38 || event.keyCode === 33) {
+                // up key || page up
                 events.view.renderer2d.moveLayerUp.dispatch("", event);
             } else if (event.keyCode === 40 || event.keyCode === 34) {
+                // down key || page down
                 events.view.renderer2d.moveLayerDown.dispatch("", event);
             } else if (event.keyCode === 80) {
+                // p key
                 event.preventDefault();
                 takeScreenshot();
+            } else if (event.keyCode === 68) {
+                // d key
+                event.preventDefault();
+                $("#diff").click();
+            } else if (event.keyCode === 83) {
+                // s key
+                event.preventDefault();
+                $("#sync").click();
             }
         });
 
