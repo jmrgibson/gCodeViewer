@@ -3,8 +3,14 @@
  * Date: 04/06/14
  * Time: 08:32 PM
  */
-GCODE.repository = (function () {
+GCODE.repository = (function (eventManager) {
     "use strict";
+
+    /**
+     * Holds the gCode app event manager
+     * @type {GCODE.events}
+     */
+    var events = eventManager;
 
     /**
      * Holds the gcodes
@@ -22,6 +28,7 @@ GCODE.repository = (function () {
          */
         save: function (reader) {
             gcodes[reader.getName()] = reader;
+            events.repository.added.dispatch(reader.getName());
         },
 
         /**

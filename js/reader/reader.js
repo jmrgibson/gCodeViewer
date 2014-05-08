@@ -344,6 +344,36 @@ GCODE.reader = (function(filename, gCodeFile, eventManager, config, ready){
          */
         getName: function () {
             return name;
+        },
+
+        /**
+         * Returns the name of the detected slicer.
+         *
+         * @returns {string}
+         */
+        getSlicer: function() {
+            return slicer;
+        },
+
+        /**
+         * Returns the number of layers the model has.
+         * @returns {Number}
+         */
+        getModelNumLayers: function () {
+            return model ? model.length : 1;
+        },
+
+        /**
+         * Returns the number of segments a specific layer has.
+         * @param {Number} layer the layer to get the number of segments from
+         * @returns {*}
+         */
+        getLayerNumSegments: function (layer) {
+            if (model) {
+                return model[layer] ? model[layer].length : 1;
+            } else {
+                return 1;
+            }
         }
     }
 });

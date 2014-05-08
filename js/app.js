@@ -50,7 +50,7 @@ GCODE.app = (function () {
      * @param domRoot the DOM root element
      */
     var createView = function (name, domRoot) {
-        views[name] = new GCODE.view(name, domRoot, config, events);
+        views[name] = new GCODE.view(name, domRoot, this);
     };
 
     /**
@@ -72,90 +72,88 @@ GCODE.app = (function () {
         ui.notify.error(message);
     }
 
-
     // ***** PUBLIC *******
-    return {
 
-        /**
-         * Initializes the GCode Viewer application
-         */
-        init: function() {
-            events = new GCODE.events();
-            config = new GCODE.config();
-            ui = new GCODE.ui(this, events);
-            repository = new GCODE.repository();
-            createView("view1", $("#view1"));
-            createView("view2", $("#view2"));
-            events.navigation.show2d.dispatch();
-        },
 
-        /**
-         * Returns the gCode app config.
-         *
-         * @returns {GCODE.config}
-         */
-        getConfig: function() {
-            return config;
-        },
-
-        /**
-         * Loads (and parses) the given GCode from the reader
-         *
-         * @param {string} filename The filename of the file
-         * @param {string} gCode The actual gCode
-         */
-        loadGCode: function (filename, gCode) {
-            var that = this;
-            var reader = new GCODE.reader(filename, gCode, events, config, function() {
-                repository.save(reader);
-                that.display(filename, "view1");
-            });
-        },
-
-        /**
-         * Returns the GCode repository
-         *
-         * @returns {GCODE.repository}
-         */
-        getRepository: function () {
-            return repository;
-        },
-
-        /**
-         * Returns the names of all views.
-         *
-         * @returns {String[]}
-         */
-        getViews: function() {
-            return Object.keys(views);
-        },
-
-        /**
-         * Returns the GCode app event manager.
-         * @returns {GCODE.events}
-         */
-        getEventManager: function() {
-            return events;
-        },
-
-        /**
-         * Displays the GCode with the given name in the view with the given name.
-         *
-         * @param {string} gCodeName
-         * @param {string} viewerName
-         */
-        display: function (gCodeName, viewerName) {
-            var reader = repository.find(gCodeName);
-            if (null == reader) {
-                handleError("GCode '" + gCodeName + "' is not loaded!");
-                return;
-            }
-            if (undefined == views[viewerName]) {
-                handleError("View '" + viewerName + "' is unknown!");
-                return;
-            }
-            views[viewerName].load(reader);
-        }
+    /**
+     * Initializes the GCode Viewer application
+     */
+    this.init = function() {
+        events = new GCODE.events();
+        config = new GCODE.config();
+        ui = new GCODE.ui(this, events);
+        repository = new GCODE.repository(events);
+        createView("view1", $("#view1"));
+        createView("view2", $("#view2"));
+        events.navigation.show2d.dispatch();
     };
 
+    /**
+     * Returns the gCode app config.
+     *
+     * @returns {GCODE.config}
+     */
+    this.getConfig = function() {
+        return config;
+    };
+
+    /**
+     * Loads (and parses) the given GCode from the reader
+     *
+     * @param {string} filename The filename of the file
+     * @param {string} gCode The actual gCode
+     */
+    this.loadGCode = function (filename, gCode) {
+        var reader = new GCODE.reader(filename, gCode, events, config, function() {
+            repository.save(reader);
+            this.display(filename, "view1");
+        });
+    };
+
+    /**
+     * Returns the GCode repository
+     *
+     * @returns {GCODE.repository}
+     */
+    this.getRepository = function () {
+        return repository;
+    };
+
+    /**
+     * Returns the names of all views.
+     *
+     * @returns {String[]}
+     */
+    this.getViews = function() {
+        return Object.keys(views);
+    };
+
+    /**
+     * Returns the GCode app event manager.
+     * @returns {GCODE.events}
+     */
+    this.getEventManager = function() {
+        return events;
+    };
+
+    /**
+     * Displays the GCode with the given name in the view with the given name.
+     *
+     * @param {string} gCodeName
+     * @param {string} viewerName
+     */
+    this.display = function (gCodeName, viewerName) {
+        var reader = repository.find(gCodeName);
+        if (null == reader) {
+            handleError("GCode '" + gCodeName + "' is not loaded!");
+            return;
+        }
+        if (undefined == views[viewerName]) {
+            handleError("View '" + viewerName + "' is unknown!");
+            return;
+        }
+        views[viewerName].load(reader);
+    };
+
+    return this;
 }());

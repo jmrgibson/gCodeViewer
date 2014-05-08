@@ -3,7 +3,7 @@
  * Date: 03/30/14
  * Time: 5:54 PM
  */
-GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
+GCODE.view = (function (viewName, domRoot, app) {
 
     /**
      * The views name.
@@ -21,7 +21,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * Holds the GCode app event manger
      * @type {GCODE.events}
      */
-    var events = eventManager;
+    var events = app.getEventManager();
 
     /**
      * Holds the GCode to be displayed in this view.
@@ -45,7 +45,13 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * Holds the GCode app config
      * @type {GCODE.config}
      */
-    var config = appConfig;
+    var config = app.getConfig();
+
+    /**
+     * Holds the gCode repository
+     * @type {GCODE.repository}
+     */
+    var repository = app.getRepository();
 
     /**
      * The lines of GCode of the current layer
@@ -62,6 +68,22 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * Holds horizontal slider of current 2D view
      */
     var sliderHor;
+
+    /**
+     * The toolbar to change the currently loaded gCode
+     */
+    var gCodeSelectToolbar;
+
+    /**
+     * The current layer info toolbar
+     */
+    var layerInfoToolbar;
+
+    /**
+     * Contains this instance.
+     * @type {GCODE.view}
+     */
+    var self = this;
 
     /**
      * Holds some underscore templates used to render the legends.
@@ -86,15 +108,28 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
 
         /** tab content for 2d rendering */
         tab2d: _.template('\
-            <div class="toolbar toolbar-right layer-info">\
+            <div class="toolbar toolbar-closeable gcode-selector">\
                 <div class="panel panel-default">\
                     <div class="panel-heading">\
-                        <i class="fa fa-chevron-circle-up"></i> Layer info\
+                        <i class="fa fa-chevron-circle-down"></i> <span class="label label-default loaded-slicer"></span> <span class="loaded-gcode">Choose gCode to display</span>\
+                        <span class="label label-primary pull-right loaded-line">\
+                            <span class="loaded-line-first"></span> - <span class="loaded-line-last"></span>\
+                        </span>\
+                    </div>\
+                    <div class="panel-body hide">\
+                        <ul class="gcode-select"></ul>\
+                    </div>\
+                </div>\
+            </div>\
+            <div class="toolbar toolbar-right toolbar-closeable layer-info">\
+                <div class="panel panel-default">\
+                    <div class="panel-heading">\
+                        <i class="fa fa-chevron-circle-down"></i> Layer info\
                         <span class="label label-primary">\
                             <span class="curLayer">0</span> / <span class="maxLayer"></span>\
                         </span>\
                     </div>\
-                    <div class="panel-body">\
+                    <div class="panel-body hide">\
                         <ul class="metrics"></ul>\
                         <strong>Extrude speeds:</strong>\
                         <div class="extrudeSpeeds"></div>\
@@ -136,8 +171,56 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
                 <div class="color" style="background-color: <%= retract %>"></div>\
                 <div class="color" style="background-color: <%= restart %>"></div>\
                 <span><%= speed %></span>\
-            </div>')
+            </div>'),
+
+        /** Used to render all gCode names as list items */
+        gCodeLi: _.template('\
+            <% _.each(gCodes, function(gcode) { %>\
+                <li>\
+                    <span class="label label-default"><%= gcode.slicer %></span>\
+                    <span class="filename"><%= gcode.name %></span>\
+                </li>\
+            <% }); %>')
     };
+
+    /**
+     * Creates a toolbar from a bootstrap panel group.
+     *
+     * @param toolbar
+     */
+    var Toolbar = function(toolbar) {
+        var iconOpen = "fa-chevron-circle-down";
+        var iconClose = "fa-chevron-circle-up";
+
+        var isOpen = function() {
+            return !toolbar.find(".panel-body").hasClass("hide");
+        }
+
+        var open = function() {
+            toolbar.find("." + iconOpen).removeClass(iconOpen).addClass(iconClose);
+            toolbar.find(".panel-body").removeClass("hide");
+        };
+
+        var close = function() {
+            toolbar.find("." + iconClose).removeClass(iconClose).addClass(iconOpen);
+            toolbar.find(".panel-body").addClass("hide");
+        }
+
+        var toggle = function() {
+            if (isOpen()) {
+                close();
+            } else {
+                open();
+            }
+        }
+        toolbar.find(".panel-heading").click(toggle);
+
+        return {
+            toggle: toggle,
+            open: open,
+            close: close
+        };
+    }
 
     /**
      * Creates the views HTML.
@@ -285,11 +368,11 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
     /**
      * Updates the layer info panel.
      *
-     * @param {integer} layerNum layer level to display
+     * @param {Number} layerNum layer level to display
      */
     var printLayerInfo = function(layerNum) {
         var z = renderer2d.getZ(layerNum);
-        var segments = renderer2d.getLayerNumSegments(layerNum);
+        var segments = gcode.getLayerNumSegments(layerNum);
         var renderOptions = renderer2d.getOptions();
         var filament = gcode.getLayerFilament(z);
 
@@ -360,7 +443,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
         // TODO: fix horizontal slider
         // sliderHor = $( "#slider-horizontal" );
 
-        var maxLayer = renderer2d.getModelNumLayers() - 1;
+        var maxLayer = gcode.getModelNumLayers() - 1;
         root.find(".layer-info .maxLayer").text(maxLayer);
 
         if (sliderVer !== undefined) {
@@ -425,11 +508,14 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * @param {int} layer number
      */
     var onLayerChange = function(layer){
-        var progress = renderer2d.getLayerNumSegments(layer) - 1;
+        var progress = gcode.getLayerNumSegments(layer) - 1;
         renderer2d.render(layer, 0, progress);
         // sliderHor.slider({max: progress, values: [0,progress]});
         // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
-        gCodeLines = gcode.getGCodeLines(layer, 0, 1);
+
+        gCodeLines = gcode.getGCodeLines(layer, 0, gcode.getLayerNumSegments(layer) - 1);
+        $(".gcode-selector .loaded-line-first").text(gCodeLines.first);
+        $(".gcode-selector .loaded-line-last").text(gCodeLines.last);
         printLayerInfo(layer);
     };
 
@@ -437,7 +523,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * Event handler to go one layer up and adjusting the slider value
      */
     var oneLayerUpIfPossible = function() {
-        var maxLayer = renderer2d.getModelNumLayers() - 1;
+        var maxLayer = gcode.getModelNumLayers() - 1;
         if (sliderVer.slider('getValue') < maxLayer) {
             sliderVer.slider('setValue', sliderVer.slider('getValue') + 1);
             onLayerChange(sliderVer.slider('getValue'));
@@ -448,7 +534,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
      * Event handler to go one layer down and adjusting the slider value
      */
     var oneLayerDownIfPossible = function() {
-        var maxLayer = renderer2d.getModelNumLayers() - 1;
+        var maxLayer = gcode.getModelNumLayers() - 1;
         if (sliderVer.slider('getValue') > 0) {
             sliderVer.slider('setValue', sliderVer.slider('getValue') - 1);
             onLayerChange(sliderVer.slider('getValue'));
@@ -463,17 +549,48 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
     }));
 
     /**
+     * Updates the gCode select box.
+     */
+    var updateGCodeSelectBox = function() {
+        var gCodes = [];
+        repository.list().forEach(function(name) {
+            gCodes.push({
+                name: name,
+                slicer: repository.find(name).getSlicer()
+            });
+        });
+        if (gCodes.length == 0) {
+            root.find(".gcode-selector").hide();
+        } else {
+            root.find(".gcode-selector").show();
+            root.find(".gcode-select").html(templates.gCodeLi({
+                gCodes: gCodes
+            }));
+            root.find(".gcode-select li").click(function() {
+                var gCodeName = $(this).find(".filename").text().trim();
+                self.load(repository.find(gCodeName));
+                gCodeSelectToolbar.close();
+            });
+        }
+    };
+    events.repository.added.add(updateGCodeSelectBox);
+
+    /**
      * To be invoked if the gCode reader changes
      */
     var gCodeChanged = function() {
         if (gcode == null) {
             root.find(".scrollbar").hide();
             root.find(".layer-info").hide();
+            root.find(".gcode-selector .loaded-line").hide();
         } else {
             _updateScrollbar();
             onLayerChange(0);
             root.find(".scrollbar").show();
             root.find(".layer-info").show();
+            root.find(".gcode-selector .loaded-line").show();
+            root.find(".gcode-selector .loaded-gcode").text(gcode.getName());
+            root.find(".gcode-selector .loaded-slicer").text(gcode.getSlicer());
         }
     };
 
@@ -502,21 +619,9 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
         root.find(".tab2d .scrollbar-plus").mousedown(sendSignal(events.view.renderer2d.moveLayerUp));
         root.find(".tab2d .scrollbar-minus").mousedown(sendSignal(events.view.renderer2d.moveLayerDown));
 
-        // layer info event handler
-        root.find(".layer-info .panel-heading").click(function() {
-            var active = !root.find(".layer-info .panel-body").hasClass("hide");
-
-            var iconOpen = "fa-chevron-circle-down";
-            var iconClose = "fa-chevron-circle-up";
-
-            if (active) {
-                root.find(".layer-info ." + iconClose).removeClass(iconClose).addClass(iconOpen);
-                root.find(".layer-info .panel-body").addClass("hide");
-            } else {
-                root.find(".layer-info ." + iconOpen).removeClass(iconOpen).addClass(iconClose);
-                root.find(".layer-info .panel-body").removeClass("hide");
-            }
-        })
+        // toolbar closeable event handler
+        gCodeSelectToolbar = new Toolbar(root.find(".gcode-selector"));
+        layerInfoToolbar = new Toolbar(root.find(".layer-info"));
     };
 
     /**
@@ -606,6 +711,7 @@ GCODE.view = (function (viewName, domRoot, appConfig, eventManager) {
         root.html(createViewHtml());
         init2dEventHandlers();
         gCodeChanged();
+        updateGCodeSelectBox();
     }();
     return this;
 });

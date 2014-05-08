@@ -48,6 +48,12 @@ GCODE.events = (function () {
             showGCode: new Signal()
         },
 
+        /** gCode repository related events */
+        repository: {
+            /** Fires when a new gCode has been added. Will supply the name of the gCode as first argument */
+            added: new Signal()
+        },
+
         /** Used to interact with the GCODE worker. */
         process: {
             returnModel: new Signal(),

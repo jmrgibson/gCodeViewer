@@ -146,6 +146,10 @@ body {
     right: 60px;
   }
 
+  &.toolbar-closeable .panel-heading {
+    cursor: pointer;
+  }
+
   ul {
     list-style-type: none;
     margin: 0;
@@ -183,6 +187,45 @@ body {
 
     &.colorbox-rounded .color {
       @include border-radius($size);
+    }
+  }
+
+  &.gcode-selector {
+    width: 350px;
+
+    .panel-heading {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 100px;
+      position: relative;
+
+      span.label-primary {
+        width: 95px;
+        position: absolute;
+        right: 5px;
+        top: 12px;
+      }
+    }
+
+    .gcode-select {
+      li {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 5px;
+        margin-bottom: 2px;
+        font-size: 12px;
+
+        &:hover {
+          background-color: #E5F3FF;
+          cursor: pointer;
+        }
+
+        .label {
+          margin-right: 5px;
+        }
+      }
     }
   }
 }

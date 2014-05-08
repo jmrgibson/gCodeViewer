@@ -125,7 +125,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
             renderOptions['extrusionWidth'] = gCodeOpts['filamentDia'] * gCodeOpts['wh'] / zoomFactor / 2;
         }
         if (renderOptions['showNextLayer'] && layerNum < model.length - 1) {
-            drawLayer(layerNum + 1, 0, getLayerNumSegments(layerNum + 1), true);
+            drawLayer(layerNum + 1, 0, curReader.getLayerNumSegments(layerNum + 1), true);
         }
         drawLayer(layerNum, fromProgress, toProgress);
     };
@@ -303,18 +303,6 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
         canvas[0].addEventListener('mouseup', sendSignal(events.view.renderer2d.mouseUp), false);
         canvas[0].addEventListener('DOMMouseScroll', sendSignal(events.view.renderer2d.scroll), false);
         canvas[0].addEventListener('mousewheel', sendSignal(events.view.renderer2d.scroll), false);
-    };
-
-    var getModelNumLayers = function(){
-        return model?model.length:1;
-    };
-
-    var getLayerNumSegments = function(layer){
-        if(model){
-            return model[layer]?model[layer].length:1;
-        }else{
-            return 1;
-        }
     };
 
     var drawGrid = function() {
@@ -544,10 +532,6 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
         reRender(layerNum, fromProgress, toProgress);
     };
 
-    // make them public
-    this.getModelNumLayers = getModelNumLayers;
-    this.getLayerNumSegments = getLayerNumSegments;
-
     /**
      * Loads the GCode reader
      * @param {GCODE.reader} reader
@@ -593,7 +577,6 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
         return '-1';
     };
     this.getZ = getZ;
-
 
     var __constructor = function() {
         self = this;
