@@ -514,8 +514,8 @@ GCODE.view = (function (viewName, domRoot, app) {
         // gCodeLines = GCODE.gCodeReader.getGCodeLines(val, sliderHor.slider("values",0), sliderHor.slider("values",1));
 
         gCodeLines = gcode.getGCodeLines(layer, 0, gcode.getLayerNumSegments(layer) - 1);
-        $(".gcode-selector .loaded-line-first").text(gCodeLines.first);
-        $(".gcode-selector .loaded-line-last").text(gCodeLines.last);
+        root.find(".gcode-selector .loaded-line-first").text(gCodeLines.first);
+        root.find(".gcode-selector .loaded-line-last").text(gCodeLines.last);
         printLayerInfo(layer);
     };
 
@@ -545,7 +545,11 @@ GCODE.view = (function (viewName, domRoot, app) {
     events.view.renderer2d.moveLayerUp.add(_ifAffected(oneLayerUpIfPossible));
     events.view.renderer2d.moveLayerDown.add(_ifAffected(oneLayerDownIfPossible));
     events.view.renderer2d.toLayer.add(_ifAffected(function(viewName, layerNum) {
-        onLayerChange(layerNum);
+        var maxLayer = gcode.getModelNumLayers();
+        if (layerNum < maxLayer) {
+            sliderVer.slider('setValue', layerNum);
+            onLayerChange(layerNum);
+        }
     }));
 
     /**
