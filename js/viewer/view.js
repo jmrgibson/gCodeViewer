@@ -718,6 +718,14 @@ GCODE.view = (function (viewName, domRoot, app) {
 //            }
     };
 
+    /**
+     * Returns true if the view has actually loaded a model.
+     * @returns {boolean}
+     */
+    this.hasLoaded = function() {
+        return gcode != null;
+    }
+
     var __construct = function() {
         root.html(createViewHtml());
         init2dEventHandlers();

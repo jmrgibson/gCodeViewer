@@ -106,7 +106,12 @@ GCODE.app = (function () {
     this.loadGCode = function (filename, gCode) {
         var reader = new GCODE.reader(filename, gCode, events, config, function() {
             repository.save(reader);
-            this.display(filename, "view1");
+            for (var viewName in views) {
+                if (!views[viewName].hasLoaded()) {
+                    this.display(filename, viewName);
+                    return;
+                }
+            }
         });
     };
 
