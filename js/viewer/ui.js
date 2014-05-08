@@ -23,6 +23,15 @@ GCODE.ui = (function (app, eventManager) {
      */
     var worker;
 
+    var templates = {
+        snapshotModal: _.template('\
+            <span class="helper"></span>\
+            <a download="<%= filename %>" href="<%= image %>">\
+                <img src="<%= image %>" />\
+            </a>\
+        ')
+    }
+
     /**
      * Dispalys a notification message.
      *
@@ -405,7 +414,19 @@ GCODE.ui = (function (app, eventManager) {
         destCtx.drawImage(canvas, 0, 0);
         app.getConfig().drawGrid.set(oldDrawGrid);
 
-        $("#screenshot-modal").html('<span class="helper"></span><img src="' + destinationCanvas.toDataURL("image/png") + '" />');
+        var filename = $(canvas).parents(".view").find(".loaded-gcode").text();
+        if (filename.indexOf(".")) {
+            filename = filename.substr(0, filename.lastIndexOf("."));
+        }
+        var now = new Date();
+        var p = function(n) { return ('0' + n).slice(-2) }
+        var date = [now.getFullYear(), p(now.getMonth() + 1) , p(now.getDate())].join("-");
+        date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
+
+        $("#screenshot-modal").html(templates.snapshotModal({
+            filename: filename + "_" + date + ".png",
+            image: destinationCanvas.toDataURL("image/png")
+        }));
         $("#screenshot-modal").modal({ show: true });
     }
 
