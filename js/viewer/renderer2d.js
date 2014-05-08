@@ -306,6 +306,9 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     };
 
     var drawGrid = function() {
+        if (!renderOptions["drawGrid"]) {
+            return;
+        }
         var i;
         ctx.strokeStyle = renderOptions["colorGrid"];
         ctx.lineWidth = 1;

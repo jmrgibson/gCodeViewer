@@ -24,7 +24,8 @@ GCODE.config = (function () {
         renderAnalysis: false,
         speedDisplayType: 1,
         showGCode: true,
-        synced: false
+        synced: false,
+        drawGrid: true
     };
 
     /**
@@ -201,6 +202,9 @@ GCODE.config = (function () {
 
         /** Whether or not to synchronize UI events between views */
         synced: new Config("synced", boolean),
+
+        /** Whether or not to draw the grid */
+        drawGrid: new Config("drawGrid", boolean),
 
         renderAnalysis: new Config("renderAnalysis", boolean)
     };

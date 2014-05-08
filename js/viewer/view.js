@@ -694,6 +694,13 @@ GCODE.view = (function (viewName, domRoot, app) {
         return domRoot.css("width");
     };
 
+    /**
+     * Returns the DOM root element of this view.
+     * @returns {*}
+     */
+    this.getRoot = function() {
+        return domRoot;
+    }
 
     /**
      * Loads a GCode into this view

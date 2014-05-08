@@ -410,6 +410,36 @@ GCODE.ui = (function (app, eventManager) {
         });
     }
 
+    var takeScreenshot = function() {
+        var canvas = null;
+        $("canvas").each(function(index, cur) {
+            if ($(cur).parent().is(":hover")) {
+                canvas = cur;
+            }
+        });
+        if (canvas == null) {
+            notify.info("Please place your mouse pointer over the canvas you want to take the screenshot from.", "Cannot take screenshot.");
+            return;
+        }
+
+        var destinationCanvas = document.createElement("canvas");
+        destinationCanvas.width = canvas.width;
+        destinationCanvas.height = canvas.height;
+        var destCtx = destinationCanvas.getContext('2d');
+        // create a rectangle with the desired color
+        destCtx.fillStyle = "#FFFFFF";
+        destCtx.fillRect(0,0,canvas.width,canvas.height);
+
+        //draw the original canvas onto the destination canvas
+        var oldDrawGrid = app.getConfig().drawGrid.get();
+        app.getConfig().drawGrid.set(false);
+        destCtx.drawImage(canvas, 0, 0);
+        app.getConfig().drawGrid.set(oldDrawGrid);
+
+        $("#screenshot-modal").html('<span class="helper"></span><img src="' + destinationCanvas.toDataURL("image/png") + '" />');
+        $("#screenshot-modal").modal({ show: true });
+    }
+
     /**
      * Initialize UI.
      */
@@ -434,6 +464,9 @@ GCODE.ui = (function (app, eventManager) {
                 events.view.renderer2d.moveLayerUp.dispatch("", event);
             } else if (event.keyCode === 40 || event.keyCode === 34) {
                 events.view.renderer2d.moveLayerDown.dispatch("", event);
+            } else if (event.keyCode === 80) {
+                event.preventDefault();
+                takeScreenshot();
             }
         });
     }
