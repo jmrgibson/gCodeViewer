@@ -78,6 +78,7 @@
             </li>
             <li><div id="diff" class="btn btn-default" data-toggle="button"><i class="fa fa-copy"></i> Diff</div></li>
             <li><div id="sync" class="btn btn-default" data-toggle="button"><i class="fa fa-link"></i> Synced</div></li>
+            <li><div id="newWindow" class="btn btn-default"><i class="fa fa-desktop"></i> Multi-Monitor</div></li>
         </ul>
 
         <ul class="nav navbar-nav navbar-right">
@@ -101,7 +102,7 @@
 </div>
 
 
-<div id="app">
+<div id="app" class="app app-navigation">
     <div id="control" style="display: none;">
         <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
         <div id="accordion2" class="panel-group">
@@ -127,9 +128,9 @@
         </div>
         <output id="errorList"></output>
     </div>
-    <div id="viewContainer">
-        <div id="view1"></div>
-        <div id="view2"></div>
+    <div id="viewContainer" class="viewContainer">
+        <div id="view1" class="viewLeft"></div>
+        <div id="view2" class="viewRight"></div>
     </div>
 </div>
 

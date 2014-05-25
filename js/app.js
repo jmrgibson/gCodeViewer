@@ -169,5 +169,12 @@ GCODE.app = (function () {
         views[viewerName].load(reader);
     };
 
+    /**
+     * Creates a view.
+     *
+     * @type {Function}
+     */
+    this.createView = createView;
+
     return this;
 }());

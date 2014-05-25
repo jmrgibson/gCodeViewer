@@ -431,6 +431,45 @@ GCODE.ui = (function (app, eventManager) {
     }
 
     /**
+     * Initializes a window that holds the GCode viewer app
+     *
+     * @param w the actual window object
+     */
+    var initWindow = function(w) {
+        // bind resize handler
+        $(w).resize(function() {
+            app.resize();
+        });
+
+        // dispatch key presses
+        $(w).keydown(function(event) {
+            if (event.keyCode === 38 || event.keyCode === 33) {
+                // up key || page up
+                events.view.renderer2d.moveLayerUp.dispatch("", event);
+            } else if (event.keyCode === 40 || event.keyCode === 34) {
+                // down key || page down
+                events.view.renderer2d.moveLayerDown.dispatch("", event);
+            } else if (event.keyCode === 80) {
+                // p key
+                event.preventDefault();
+                takeScreenshot();
+            } else if (event.keyCode === 68) {
+                // d key
+                event.preventDefault();
+                $("#diff").click();
+            } else if (event.keyCode === 83) {
+                // s key
+                event.preventDefault();
+                $("#sync").click();
+            }
+        });
+
+        // init settings
+        app.resize();
+        events.navigation.show2d.dispatch();
+    };
+
+    /**
      * Initialize UI.
      */
     var init = function () {
@@ -465,32 +504,39 @@ GCODE.ui = (function (app, eventManager) {
             notify.info("Default preferences loaded.");
         });
 
-        // dispatch key presses
-        $("html").keydown(function(event) {
-            if (event.keyCode === 38 || event.keyCode === 33) {
-                // up key || page up
-                events.view.renderer2d.moveLayerUp.dispatch("", event);
-            } else if (event.keyCode === 40 || event.keyCode === 34) {
-                // down key || page down
-                events.view.renderer2d.moveLayerDown.dispatch("", event);
-            } else if (event.keyCode === 80) {
-                // p key
-                event.preventDefault();
-                takeScreenshot();
-            } else if (event.keyCode === 68) {
-                // d key
-                event.preventDefault();
-                $("#diff").click();
-            } else if (event.keyCode === 83) {
-                // s key
-                event.preventDefault();
-                $("#sync").click();
-            }
-        });
+        // initialize this window
+        initWindow(window);
 
-        // window resize
-        $(window).resize(function() {
-            app.resize();
+        // open new window
+        $("#newWindow").click(function() {
+            var newWindow = window.open("", "gCodeViewer", "width=100, height=100");
+            newWindow.document.open();
+            newWindow.moveTo(0,0);
+            newWindow.resizeTo(screen.width,screen.height);
+
+            var html = '\
+            <!DOCTYPE html>\
+            <html>\
+                <head>\
+                    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen">\
+                    <link rel="stylesheet" type="text/css" href="css/gCodeViewer.css" />\
+                </head>\
+                <body>\
+                    <div class="app">\
+                        <div id="secondViewContainer" class="viewContainer">\
+                            <div id="secondView1" class="viewLeft"></div>\
+                            <div id="secondView2" class="viewRight"></div>\
+                        </div>\
+                    </div>\
+                </body>\
+            </html>\
+            ';
+            newWindow.document.write(html);
+            newWindow.document.close();
+            app.createView("test1", $(newWindow.document).find("#secondView1"));
+            app.createView("test2", $(newWindow.document).find("#secondView2"));
+
+            initWindow(newWindow);
         });
     }
     init();
