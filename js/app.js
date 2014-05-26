@@ -44,6 +44,18 @@ GCODE.app = (function () {
     var views = {};
 
     /**
+     * Holds a queue of gCodes to load
+     * @type {{}}
+     */
+    var loadQueue = {};
+
+    /**
+     * Holds a lock.
+     * @type {boolean}
+     */
+    var locked = false;
+
+    /**
      * Creates a full GCode viewer within the given DOM element. The DOM element has to be empty.
      *
      * @param {string} name the name to identify the viewer
@@ -70,6 +82,34 @@ GCODE.app = (function () {
     var handleError = function (message) {
         console.log(message);
         ui.notify.error(message);
+    }
+
+    /**
+     * Actually loads the gcode. Ensures we only load once.
+     */
+    var actuallyLoad = function() {
+        // check if we have something to load
+        var toLoad = _.keys(loadQueue);
+        if (toLoad.length == 0 || locked) {
+            return;
+        }
+        locked = true;
+
+        // load it
+        var filename = toLoad[0];
+        var gCode = loadQueue[filename];
+        delete loadQueue[filename];
+        var reader = new GCODE.reader(filename, gCode, events, config, function() {
+            repository.save(reader);
+            for (var viewName in views) {
+                if (!views[viewName].hasLoaded()) {
+                    this.display(filename, viewName);
+                    break;
+                }
+            }
+            locked = false;
+            window.setTimeout(actuallyLoad, 20);
+        });
     }
 
     // ***** PUBLIC *******
@@ -104,15 +144,8 @@ GCODE.app = (function () {
      * @param {string} gCode The actual gCode
      */
     this.loadGCode = function (filename, gCode) {
-        var reader = new GCODE.reader(filename, gCode, events, config, function() {
-            repository.save(reader);
-            for (var viewName in views) {
-                if (!views[viewName].hasLoaded()) {
-                    this.display(filename, viewName);
-                    return;
-                }
-            }
-        });
+        loadQueue[filename] = gCode;
+        actuallyLoad();
     };
 
     /**
