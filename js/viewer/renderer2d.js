@@ -624,7 +624,6 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
      */
     this.adjustToThis = function() {
         var origin = ctx.transformedPoint(0, 0);
-        console.log(origin.x, origin.y);
         events.view.renderer2d.adjust.dispatch(view.getName(), absZoom, -origin.x, -origin.y);
     }
 

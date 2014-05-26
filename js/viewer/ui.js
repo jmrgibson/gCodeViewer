@@ -461,9 +461,7 @@ GCODE.ui = (function (app, eventManager) {
                 // a key
                 event.preventDefault();
                 var hovered = app.getHoveredView();
-                console.log("a");
                 if (hovered != null) {
-                    console.log("hovered");
                     hovered.adjustToThis();
                 }
             } else if (event.keyCode === 83) {

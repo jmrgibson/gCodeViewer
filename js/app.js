@@ -141,7 +141,6 @@ GCODE.app = (function () {
     this.getHoveredView = function () {
         for (var viewName in views) {
             var view = views[viewName];
-            console.log(view);
             if (view.isHovered()) {
                 return view;
             }
