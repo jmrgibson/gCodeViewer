@@ -472,6 +472,7 @@ GCODE.ui = (function (app, eventManager) {
             <html>\
                 <head>\
                     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">\
+                    <link rel="stylesheet" type="text/css" href="lib/jcrop/jquery.Jcrop.min.css" media="screen" />\
                     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen">\
                     <link rel="stylesheet" type="text/css" href="css/gCodeViewer.css" />\
                 </head>\

@@ -3,7 +3,7 @@
  * Date: 05/26/14
  * Time: 4:51 PM
  */
-GCODE.snapshot = function(gCodeApp, bindToView) {
+GCODE.snapshot = function (gCodeApp, bindToView) {
 
     /**
      * Holds the GCode application
@@ -32,7 +32,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
     /**
      * Holds the JCrop api instance
      */
-    var jcrop_api;
+    var jcrop_api = null;
 
     /**
      * Holds the view canvas
@@ -42,7 +42,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
     /**
      * Returns the generated file name
      */
-    var createFileName = function() {
+    var createFileName = function () {
         // initial file name
         var filename;
         if (view.hasLoaded()) {
@@ -58,7 +58,9 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
 
         // inject date
         var now = new Date();
-        var p = function(n) { return ('0' + n).slice(-2) }
+        var p = function (n) {
+            return ('0' + n).slice(-2)
+        }
         var date = [now.getFullYear(), p(now.getMonth() + 1) , p(now.getDate())].join("-");
         date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
 
@@ -69,7 +71,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
     /**
      * Returns the base64 encoded image data taken from the canvas.
      */
-    var toPNG = function(scale) {
+    var toPNG = function (scale) {
         if (scale == undefined) {
             scale = false;
         }
@@ -97,7 +99,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
 
         // create a rectangle with the desired color
         destCtx.fillStyle = "#FFFFFF";
-        destCtx.fillRect(0,0,target.width,target.height);
+        destCtx.fillRect(0, 0, target.width, target.height);
 
         //draw the original canvas onto the destination canvas
         var oldDrawGrid = app.getConfig().drawGrid.get();
@@ -109,7 +111,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
         return destinationCanvas.toDataURL("image/png")
     }
 
-    var updateDownloadLink = function() {
+    var updateDownloadLink = function () {
         var img = toPNG(true);
         var filename = createFileName();
         root.find("a.download")
@@ -120,7 +122,7 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
     /**
      * Takes a snapshot of the canvas the mouse is hovering over.
      */
-    var updateEditor = function() {
+    var updateEditor = function () {
         // remove existing jcrop
         if (jcrop_api) {
             jcrop_api.release();
@@ -132,16 +134,33 @@ GCODE.snapshot = function(gCodeApp, bindToView) {
         root.find("img.snapshot").attr("src", img);
         updateDownloadLink();
 
-        _.defer(function() {
+        _.defer(function () {
             root.find("img.snapshot").Jcrop({
-                onChange: updateDownloadLink,
+                onChange: function () {
+                    updateDownloadLink();
+                    if (view.isHovered() && app.getConfig().synced.get()) {
+                        events.view.renderer2d.cropSnapshot.dispatch(_.values(_.pick(jcrop_api.tellSelect(), "x", "y", "x2", "y2")));
+                    }
+                },
                 trueSize: [canvas.width, canvas.height],
                 keySupport: false
-            }, function() {
+            }, function () {
                 jcrop_api = this;
             });
         });
     }
+
+    /**
+     * Updates the crop size.
+     * @param array
+     */
+    var updateCrop = function (array) {
+        if (view.isHovered() || !app.getConfig().synced.get() || jcrop_api == null) {
+            return;
+        }
+        jcrop_api.setSelect(array);
+    }
+    events.view.renderer2d.cropSnapshot.add(updateCrop);
 
     /**
      * Public method to take snapshot

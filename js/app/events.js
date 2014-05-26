@@ -38,7 +38,9 @@ GCODE.events = (function () {
                 /** adjusts all layers to same zoom and offset */
                 adjust: new Signal(),
                 /** takes a snapshot from the canvas */
-                snapshot: new Signal()
+                snapshot: new Signal(),
+                /** event to crop all snapshots */
+                cropSnapshot: new Signal()
             }
         },
 
