@@ -23,15 +23,6 @@ GCODE.ui = (function (app, eventManager) {
      */
     var worker;
 
-    var templates = {
-        snapshotModal: _.template('\
-            <span class="helper"></span>\
-            <a download="<%= filename %>" href="<%= image %>">\
-                <img src="<%= image %>" />\
-            </a>\
-        ')
-    }
-
     /**
      * Dispalys a notification message.
      *
@@ -386,51 +377,6 @@ GCODE.ui = (function (app, eventManager) {
     }
 
     /**
-     * Takes a snapshot of the canvas the mouse is hovering over.
-     */
-    var takeScreenshot = function() {
-        var canvas = null;
-        $("canvas").each(function(index, cur) {
-            if ($(cur).parent().is(":hover")) {
-                canvas = cur;
-            }
-        });
-        if (canvas == null) {
-            notify.info("Please place your mouse pointer over the canvas you want to take the screenshot from.", "Cannot take screenshot.");
-            return;
-        }
-
-        var destinationCanvas = document.createElement("canvas");
-        destinationCanvas.width = canvas.width;
-        destinationCanvas.height = canvas.height;
-        var destCtx = destinationCanvas.getContext('2d');
-        // create a rectangle with the desired color
-        destCtx.fillStyle = "#FFFFFF";
-        destCtx.fillRect(0,0,canvas.width,canvas.height);
-
-        //draw the original canvas onto the destination canvas
-        var oldDrawGrid = app.getConfig().drawGrid.get();
-        app.getConfig().drawGrid.set(false);
-        destCtx.drawImage(canvas, 0, 0);
-        app.getConfig().drawGrid.set(oldDrawGrid);
-
-        var filename = $(canvas).parents(".view").find(".loaded-gcode").text();
-        if (filename.indexOf(".")) {
-            filename = filename.substr(0, filename.lastIndexOf("."));
-        }
-        var now = new Date();
-        var p = function(n) { return ('0' + n).slice(-2) }
-        var date = [now.getFullYear(), p(now.getMonth() + 1) , p(now.getDate())].join("-");
-        date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
-
-        $("#screenshot-modal").html(templates.snapshotModal({
-            filename: filename + "_" + date + ".png",
-            image: destinationCanvas.toDataURL("image/png")
-        }));
-        $("#screenshot-modal").modal({ show: true });
-    }
-
-    /**
      * Initializes a window that holds the GCode viewer app
      *
      * @param w the actual window object
@@ -452,7 +398,7 @@ GCODE.ui = (function (app, eventManager) {
             } else if (event.keyCode === 80) {
                 // p key
                 event.preventDefault();
-                takeScreenshot();
+                events.view.renderer2d.snapshot.dispatch("", event);
             } else if (event.keyCode === 68) {
                 // d key
                 event.preventDefault();

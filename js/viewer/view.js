@@ -152,6 +152,9 @@ GCODE.view = (function (viewName, domRoot, app) {
             <canvas class="render2d"></canvas>\
         '),
 
+        /** Tab used to display the snapshot */
+        tabSnapshot: _.template('<div class="snap-container"></div>'),
+
         /** 2D model info: used to render a single metric */
         li: _.template('\
             <li title="<%= tooltip %>" data-toggle="tooltip" data-placement="top">\
@@ -180,7 +183,15 @@ GCODE.view = (function (viewName, domRoot, app) {
                     <span class="label label-default"><%= gcode.slicer %></span>\
                     <span class="filename"><%= gcode.name %></span>\
                 </li>\
-            <% }); %>')
+            <% }); %>'),
+
+        /** Used to display the snapshot editor */
+        snapshotEditor: _.template('\
+            <span class="helper"></span>\
+            <a download="<%= filename %>" href="<%= image %>">\
+                <img src="<%= image %>" />\
+            </a>\
+        ')
     };
 
     /**
@@ -241,6 +252,10 @@ GCODE.view = (function (viewName, domRoot, app) {
                 templates.tab({
                     id: "GCode",
                     content: templates.tabGCode()
+                }),
+                templates.tab({
+                    id: "Snapshot",
+                    content: templates.tabSnapshot()
                 })
             ]
         });
@@ -488,12 +503,16 @@ GCODE.view = (function (viewName, domRoot, app) {
      * Only forwards events if current view is affected.
      *
      * @param {Function} handler to forward event to
+     * @param {boolean} gCodeLoaded True to be affected only iff gcode is loaded
      * @returns {Function}
      * @private
      */
-    var _ifAffected = function(handler) {
+    var _ifAffected = function(handler, gCodeLoaded) {
+        if (gCodeLoaded != false && gCodeLoaded != true) {
+            gCodeLoaded = true;
+        }
         return function (viewName) {
-            if (gcode == null) {
+            if (gCodeLoaded && gcode == null) {
                 return;
             }
             if (viewName == name || true === config.synced.get() || true === config.diff.get() || root.is(":hover")) {
@@ -541,6 +560,42 @@ GCODE.view = (function (viewName, domRoot, app) {
         }
     }
 
+    /**
+     * Takes a snapshot of the canvas the mouse is hovering over.
+     */
+    var takeSnapshot = function() {
+        self.navigation.showSnapshot();
+        var canvas = root.find(".render2d")[0];
+
+        var destinationCanvas = document.createElement("canvas");
+        destinationCanvas.width = canvas.width;
+        destinationCanvas.height = canvas.height;
+        var destCtx = destinationCanvas.getContext('2d');
+        // create a rectangle with the desired color
+        destCtx.fillStyle = "#FFFFFF";
+        destCtx.fillRect(0,0,canvas.width,canvas.height);
+
+        //draw the original canvas onto the destination canvas
+        var oldDrawGrid = app.getConfig().drawGrid.get();
+        //app.getConfig().drawGrid.set(false);
+        destCtx.drawImage(canvas, 0, 0);
+        //app.getConfig().drawGrid.set(oldDrawGrid);
+
+        var filename = $(canvas).parents(".view").find(".loaded-gcode").text();
+        if (filename.indexOf(".")) {
+            filename = filename.substr(0, filename.lastIndexOf("."));
+        }
+        var now = new Date();
+        var p = function(n) { return ('0' + n).slice(-2) }
+        var date = [now.getFullYear(), p(now.getMonth() + 1) , p(now.getDate())].join("-");
+        date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
+
+        root.find(".snap-container").html(templates.snapshotEditor({
+            filename: filename + "_" + date + ".png",
+            image: destinationCanvas.toDataURL("image/png")
+        }));
+    }
+
     // register event listeners.
     events.view.renderer2d.moveLayerUp.add(_ifAffected(oneLayerUpIfPossible));
     events.view.renderer2d.moveLayerDown.add(_ifAffected(oneLayerDownIfPossible));
@@ -551,6 +606,7 @@ GCODE.view = (function (viewName, domRoot, app) {
             onLayerChange(layerNum);
         }
     }));
+    events.view.renderer2d.snapshot.add(_ifAffected(takeSnapshot, false));
 
     /**
      * Updates the gCode select box.
@@ -661,6 +717,11 @@ GCODE.view = (function (viewName, domRoot, app) {
         showGCode: function () {
             hideActiveTab();
             root.find(".tabGCode").addClass("active");
+        },
+
+        showSnapshot: function() {
+            hideActiveTab();
+            root.find(".tabSnapshot").addClass("active");
         }
     };
 

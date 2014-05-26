@@ -36,7 +36,9 @@ GCODE.events = (function () {
                 /** moves to specific layer, if possible */
                 toLayer: new Signal(),
                 /** adjusts all layers to same zoom and offset */
-                adjust: new Signal()
+                adjust: new Signal(),
+                /** takes a snapshot from the canvas */
+                snapshot: new Signal()
             }
         },
 
