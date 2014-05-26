@@ -34,7 +34,9 @@ GCODE.events = (function () {
                 /** used to move one layer down, if possible */
                 moveLayerDown: new Signal(),
                 /** moves to specific layer, if possible */
-                toLayer: new Signal()
+                toLayer: new Signal(),
+                /** adjusts all layers to same zoom and offset */
+                adjust: new Signal()
             }
         },
 

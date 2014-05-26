@@ -457,6 +457,15 @@ GCODE.ui = (function (app, eventManager) {
                 // d key
                 event.preventDefault();
                 $("#diff").click();
+            } else if (event.keyCode === 65) {
+                // a key
+                event.preventDefault();
+                var hovered = app.getHoveredView();
+                console.log("a");
+                if (hovered != null) {
+                    console.log("hovered");
+                    hovered.adjustToThis();
+                }
             } else if (event.keyCode === 83) {
                 // s key
                 event.preventDefault();
@@ -518,6 +527,7 @@ GCODE.ui = (function (app, eventManager) {
             <!DOCTYPE html>\
             <html>\
                 <head>\
+                    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">\
                     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen">\
                     <link rel="stylesheet" type="text/css" href="css/gCodeViewer.css" />\
                 </head>\

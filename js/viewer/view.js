@@ -726,6 +726,22 @@ GCODE.view = (function (viewName, domRoot, app) {
     };
 
     /**
+     * Returns whether this view is currently being hovered.
+     *
+     * @returns {boolean}
+     */
+    this.isHovered = function() {
+        return root.is(":hover");
+    }
+
+    /**
+     * Adjusts all other views to the perspective of this view.
+     */
+    this.adjustToThis = function() {
+        renderer2d.adjustToThis();
+    }
+
+    /**
      * Returns true if the view has actually loaded a model.
      * @returns {boolean}
      */

@@ -37,6 +37,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
 
 //    var colorGrid="#bbbbbb", colorLine="#000000";
     var sliderHor, sliderVer;
+    var absZoom = 0;
     var layerNumStore, progressStore={from: 0, to: -1};
     var lastX, lastY;
     var dragStart,dragged;
@@ -245,6 +246,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
 
     // scroll event handler
     var zoom = function (clicks) {
+        absZoom += clicks;
         var pt = ctx.transformedPoint(lastX, lastY);
         ctx.translate(pt.x, pt.y);
         var factor = Math.pow(scaleFactor, clicks);
@@ -266,6 +268,19 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     }, function() {
         return true === config.diff.get()
     }));
+
+    events.view.renderer2d.adjust.add(function(viewName, newAbsZoom, offsetX, offsetY) {
+        if (viewName == view.getName()) {
+            return;
+        }
+        zoom(newAbsZoom - absZoom);
+        if (offsetX != undefined && offsetY != undefined) {
+            var origin = ctx.transformedPoint(0, 0);
+            ctx.translate(origin.x,  origin.y);
+            ctx.translate(offsetX,  offsetY);
+        }
+        reRender();
+    });
 
 
     /**
@@ -603,6 +618,15 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
         return '-1';
     };
     this.getZ = getZ;
+
+    /**
+     * Adjusts all other renderer2ds to the perspective of this renderer
+     */
+    this.adjustToThis = function() {
+        var origin = ctx.transformedPoint(0, 0);
+        console.log(origin.x, origin.y);
+        events.view.renderer2d.adjust.dispatch(view.getName(), absZoom, -origin.x, -origin.y);
+    }
 
     var __constructor = function() {
         self = this;

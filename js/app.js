@@ -134,6 +134,22 @@ GCODE.app = (function () {
     };
 
     /**
+     * Returns the view currently being hovered. If no view is hovered, returns null.
+     *
+     * @returns {GCODE.view}
+     */
+    this.getHoveredView = function () {
+        for (var viewName in views) {
+            var view = views[viewName];
+            console.log(view);
+            if (view.isHovered()) {
+                return view;
+            }
+        }
+        return null;
+    };
+
+    /**
      * Resizes all views.
      */
     this.resize = function() {
