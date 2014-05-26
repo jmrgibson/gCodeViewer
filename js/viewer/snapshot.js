@@ -125,7 +125,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
     var updateEditor = function () {
         // remove existing jcrop
         if (jcrop_api) {
-            jcrop_api.release();
+            jcrop_api.destroy();
             jcrop_api = null;
         }
 
@@ -155,10 +155,14 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
      * @param array
      */
     var updateCrop = function (array) {
-        if (view.isHovered() || !app.getConfig().synced.get() || jcrop_api == null) {
+        if (array == undefined || view.isHovered() || !app.getConfig().synced.get() || jcrop_api == null) {
             return;
         }
-        jcrop_api.setSelect(array);
+        if (array[0] == array[2] || array[1] == array[3]) {
+            jcrop_api.release();
+        } else {
+            jcrop_api.setSelect(array);
+        }
     }
     events.view.renderer2d.cropSnapshot.add(updateCrop);
 
