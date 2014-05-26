@@ -239,9 +239,6 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
     // mouseUp event handler
     events.view.renderer2d.mouseUp.add(_affected(function (viewName, evt) {
         dragStart = null;
-        if (!dragged) {
-            zoom(evt.shiftKey ? -1 : 1);
-        }
     }));
 
     // scroll event handler
