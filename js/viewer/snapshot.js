@@ -111,14 +111,17 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         return destinationCanvas.toDataURL("image/png");
     }
 
-    var updateDownloadLink = function () {
+    /**
+     * Trigger snapshot download
+     */
+    var download = function () {
         var img = toPNG(true);
         var filename = createFileName();
-        root.find("a.download")
-            .attr("download", filename)
-            .attr("href", img)
-            .attr("data-downloadurl", "text/plain:" + filename + ":" + img);
-    }
+        var a = document.createElement("a");
+        a.download = filename;
+        a.href = img;
+        a.click();
+    };
 
     /**
      * Takes a snapshot of the canvas the mouse is hovering over.
@@ -133,12 +136,10 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         // set new image
         var img = toPNG();
         root.find("img.snapshot").attr("src", img);
-        updateDownloadLink();
 
         _.defer(function () {
             root.find("img.snapshot").Jcrop({
                 onChange: function () {
-                    updateDownloadLink();
                     if (view.isHovered() && app.getConfig().synced.get()) {
                         events.view.renderer2d.cropSnapshot.dispatch(_.values(_.pick(jcrop_api.tellSelect(), "x", "y", "x2", "y2")));
                     }
@@ -168,9 +169,26 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
     events.view.renderer2d.cropSnapshot.add(updateCrop);
 
     /**
+     * Download this snapshot if we download all.
+     */
+    root.find("a.download").click(function(e) {
+        download();
+        return e.preventDefault();
+    });
+    events.view.renderer2d.downloadSnapshots.add(function() {
+        if (root.hasClass("active")) {
+            console.log("d", view.getName());
+            download();
+        }
+    })
+
+    /**
      * Public method to take snapshot
      */
     this.takeSnapshot = updateEditor;
+    root.find(".download-all").click(function() {
+        events.view.renderer2d.downloadSnapshots.dispatch();
+    });
 
     return this;
 };

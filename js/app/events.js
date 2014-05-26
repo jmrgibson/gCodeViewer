@@ -40,7 +40,9 @@ GCODE.events = (function () {
                 /** takes a snapshot from the canvas */
                 snapshot: new Signal(),
                 /** event to crop all snapshots */
-                cropSnapshot: new Signal()
+                cropSnapshot: new Signal(),
+                /** event used to trigger the download of all snapshots */
+                downloadSnapshots: new Signal()
             }
         },
 
