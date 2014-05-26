@@ -344,11 +344,11 @@ body {
 }
 
 .snap-container {
-  padding: 50px;
+  padding: 70px;
   background-color: #666;
   @include box-sizing(border-box);
 
-  img {
+  img.snapshot {
     max-width: 100%;
     max-height: 100%;
   }

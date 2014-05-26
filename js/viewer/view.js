@@ -80,6 +80,12 @@ GCODE.view = (function (viewName, domRoot, app) {
     var layerInfoToolbar;
 
     /**
+     * Holds the snapshot service
+     * @type {GCODE.snapshot}
+     */
+    var snapshotService;
+
+    /**
      * Contains this instance.
      * @type {GCODE.view}
      */
@@ -153,7 +159,16 @@ GCODE.view = (function (viewName, domRoot, app) {
         '),
 
         /** Tab used to display the snapshot */
-        tabSnapshot: _.template('<div class="snap-container"></div>'),
+        tabSnapshot: _.template('\
+            <div class="toolbar" style="width: 300px;">\
+                <a href="#" class="btn btn-default btn-sm download"><i class="fa fa-download"></i> Download</a>\
+                <a href="#" class="btn btn-default btn-sm download-all"><i class="fa fa-cloud-download"></i> Download all</a>\
+            </div>\
+            <div class="snap-container">\
+                <span class="helper"></span>\
+                <img src="" class="snapshot" alt="No snapshot taken." />\
+            </div>\
+            '),
 
         /** 2D model info: used to render a single metric */
         li: _.template('\
@@ -183,15 +198,7 @@ GCODE.view = (function (viewName, domRoot, app) {
                     <span class="label label-default"><%= gcode.slicer %></span>\
                     <span class="filename"><%= gcode.name %></span>\
                 </li>\
-            <% }); %>'),
-
-        /** Used to display the snapshot editor */
-        snapshotEditor: _.template('\
-            <span class="helper"></span>\
-            <a download="<%= filename %>" href="<%= image %>">\
-                <img src="<%= image %>" />\
-            </a>\
-        ')
+            <% }); %>')
     };
 
     /**
@@ -560,42 +567,6 @@ GCODE.view = (function (viewName, domRoot, app) {
         }
     }
 
-    /**
-     * Takes a snapshot of the canvas the mouse is hovering over.
-     */
-    var takeSnapshot = function() {
-        self.navigation.showSnapshot();
-        var canvas = root.find(".render2d")[0];
-
-        var destinationCanvas = document.createElement("canvas");
-        destinationCanvas.width = canvas.width;
-        destinationCanvas.height = canvas.height;
-        var destCtx = destinationCanvas.getContext('2d');
-        // create a rectangle with the desired color
-        destCtx.fillStyle = "#FFFFFF";
-        destCtx.fillRect(0,0,canvas.width,canvas.height);
-
-        //draw the original canvas onto the destination canvas
-        var oldDrawGrid = app.getConfig().drawGrid.get();
-        //app.getConfig().drawGrid.set(false);
-        destCtx.drawImage(canvas, 0, 0);
-        //app.getConfig().drawGrid.set(oldDrawGrid);
-
-        var filename = $(canvas).parents(".view").find(".loaded-gcode").text();
-        if (filename.indexOf(".")) {
-            filename = filename.substr(0, filename.lastIndexOf("."));
-        }
-        var now = new Date();
-        var p = function(n) { return ('0' + n).slice(-2) }
-        var date = [now.getFullYear(), p(now.getMonth() + 1) , p(now.getDate())].join("-");
-        date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
-
-        root.find(".snap-container").html(templates.snapshotEditor({
-            filename: filename + "_" + date + ".png",
-            image: destinationCanvas.toDataURL("image/png")
-        }));
-    }
-
     // register event listeners.
     events.view.renderer2d.moveLayerUp.add(_ifAffected(oneLayerUpIfPossible));
     events.view.renderer2d.moveLayerDown.add(_ifAffected(oneLayerDownIfPossible));
@@ -606,7 +577,6 @@ GCODE.view = (function (viewName, domRoot, app) {
             onLayerChange(layerNum);
         }
     }));
-    events.view.renderer2d.snapshot.add(_ifAffected(takeSnapshot, false));
 
     /**
      * Updates the gCode select box.
@@ -729,6 +699,10 @@ GCODE.view = (function (viewName, domRoot, app) {
     events.navigation.show2d.add(this.navigation.show2d);
     events.navigation.show3d.add(this.navigation.show3d);
     events.navigation.showGCode.add(this.navigation.showGCode);
+    events.view.renderer2d.snapshot.add(_ifAffected(function() {
+        snapshotService.takeSnapshot();
+        self.navigation.showSnapshot();
+    }, false));
 
     /**
      * Returns the views name.
@@ -810,11 +784,20 @@ GCODE.view = (function (viewName, domRoot, app) {
         return gcode != null;
     }
 
+    /**
+     * Returns the loaded {@link GCODE.reader}
+     * @returns {GCODE.reader}
+     */
+    this.getLoaded = function() {
+        return gcode;
+    }
+
     var __construct = function() {
         root.html(createViewHtml());
         init2dEventHandlers();
         gCodeChanged();
         updateGCodeSelectBox();
+        snapshotService = new GCODE.snapshot(app, self);
     }();
     return this;
 });
