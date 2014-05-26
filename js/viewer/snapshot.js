@@ -65,7 +65,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         date += "_" + [p(now.getHours()), p(now.getMinutes()), p(now.getSeconds())].join("-");
 
         // assemble file name
-        return filename + "_" + date + ".png";
+        return filename + "_L" + view.getRoot().find(".curLayer").text() + "_" + date + ".png";
     };
 
     /**
@@ -103,9 +103,9 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
 
         //draw the original canvas onto the destination canvas
         var oldDrawGrid = app.getConfig().drawGrid.get();
-        //app.getConfig().drawGrid.set(false);
+        app.getConfig().drawGrid.set(false);
         destCtx.drawImage(canvas, -target.drawStartX, -target.drawStartY);
-        //app.getConfig().drawGrid.set(oldDrawGrid);
+        app.getConfig().drawGrid.set(oldDrawGrid);
 
         // get image
         return destinationCanvas.toDataURL("image/png");
