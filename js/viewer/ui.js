@@ -492,6 +492,9 @@ GCODE.ui = (function (app, eventManager) {
             app.createView("test2", $(newWindow.document).find("#secondView2"));
 
             initWindow(newWindow);
+            window.onbeforeunload = function(e) {
+                newWindow.close();
+            }
         });
     }
     init();
