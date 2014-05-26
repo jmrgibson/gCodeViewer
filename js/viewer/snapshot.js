@@ -177,7 +177,6 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
     });
     events.view.renderer2d.downloadSnapshots.add(function() {
         if (root.hasClass("active")) {
-            console.log("d", view.getName());
             download();
         }
     })
