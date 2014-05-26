@@ -161,7 +161,7 @@ GCODE.view = (function (viewName, domRoot, app) {
         /** Tab used to display the snapshot */
         tabSnapshot: _.template('\
             <div class="toolbar" style="width: 300px;">\
-                <a href="#" class="btn btn-default btn-sm download"><i class="fa fa-download"></i> Download</a>\
+                <a download="" href="#" class="btn btn-default btn-sm download"><i class="fa fa-download"></i> Download</a>\
                 <a href="#" class="btn btn-default btn-sm download-all"><i class="fa fa-cloud-download"></i> Download all</a>\
             </div>\
             <div class="snap-container">\

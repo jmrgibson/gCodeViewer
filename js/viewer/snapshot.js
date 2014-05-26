@@ -52,7 +52,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         }
 
         // remove gcode file extension
-        if (filename.indexOf(".")) {
+        if (-1 != filename.indexOf(".")) {
             filename = filename.substr(0, filename.lastIndexOf("."));
         }
 
@@ -108,7 +108,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         //app.getConfig().drawGrid.set(oldDrawGrid);
 
         // get image
-        return destinationCanvas.toDataURL("image/png")
+        return destinationCanvas.toDataURL("image/png");
     }
 
     var updateDownloadLink = function () {
@@ -117,6 +117,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         root.find("a.download")
             .attr("download", filename)
             .attr("href", img)
+            .attr("data-downloadurl", "text/plain:" + filename + ":" + img);
     }
 
     /**
