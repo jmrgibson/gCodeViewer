@@ -36,6 +36,12 @@ GCODE.view = (function (viewName, domRoot, app) {
     var renderer2d;
 
     /**
+     * Holds the 3D GCode renderer
+     * @type {GCODE.renderer3d}
+     */
+    var renderer3d;
+
+    /**
      * Display type enum
      * @type {{speed: number, expermm: number, volpersec: number}}
      */
@@ -625,10 +631,9 @@ GCODE.view = (function (viewName, domRoot, app) {
     };
 
     /**
-     * Initializes the sliders of the 2D render pane
+     * Initializes the 2D tab of the view
      */
-    var self = this;
-    var init2dEventHandlers = function() {
+    var init2d = function() {
         // init 2d renderer
         var canvasRoot = root.find(".render2d");
         renderer2d = new GCODE.renderer(canvasRoot, config, self, events);
@@ -653,6 +658,13 @@ GCODE.view = (function (viewName, domRoot, app) {
         gCodeSelectToolbar = new Toolbar(root.find(".gcode-selector"));
         layerInfoToolbar = new Toolbar(root.find(".layer-info"));
     };
+
+    /**
+     * Initializes the 3D tab of the view.
+     */
+    var init3d = function() {
+        renderer3d = new GCODE.renderer3d(self);
+    }
 
     /**
      * Hides the active content tab within the view
@@ -752,6 +764,8 @@ GCODE.view = (function (viewName, domRoot, app) {
     this.load = function (reader) {
         gcode = reader;
         renderer2d.load(reader);
+        renderer3d.setModel(reader);
+        renderer3d.doRender();
         gCodeChanged();
 //            if (showGCode) {
 //                myCodeMirror.setValue(theFile.target.result);
@@ -794,7 +808,8 @@ GCODE.view = (function (viewName, domRoot, app) {
 
     var __construct = function() {
         root.html(createViewHtml());
-        init2dEventHandlers();
+        init2d();
+        init3d();
         gCodeChanged();
         updateGCodeSelectBox();
         snapshotService = new GCODE.snapshot(app, self);
