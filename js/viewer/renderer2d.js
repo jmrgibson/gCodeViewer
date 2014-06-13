@@ -350,6 +350,54 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
 
     };
 
+    /**
+     * Returns a function to return the color of a specific value when supplying a certain scale.
+     *
+     * @param steps List of step objects, e.g. [{step:5, color:"#DDD"}, ...]
+     * @returns {Function}
+     */
+    var colorScale = function(steps) {
+        var sorted = _.sortBy(steps, "step");
+        var thresholds = [];
+        for (var pos = 0; pos < sorted.length - 1; pos++) {
+            thresholds.push({
+                step: (sorted[pos].step + sorted[pos + 1].step) / 2,
+                color: sorted[pos].color
+            });
+        }
+        var lastColor = sorted.pop().color;
+        return function(value) {
+            for (var pos = 0; pos < thresholds.length; pos++) {
+                if (value <= thresholds[pos].step) {
+                    return thresholds[pos].color;
+                }
+            }
+            console.log(value);
+            return lastColor;
+        }
+    }
+
+    /**
+     * Provides colors for the speed scale.
+     *
+     * @param value The current value to turn into a color
+     * @type {Function}
+     */
+    var speedScale = colorScale([
+        { step:   5, color: "#b2df8a" },
+        { step:  10, color: "#33a02c" },
+        { step:  15, color: "#a6cee3" },
+        { step:  20, color: "#1f78b4" },
+        { step:  25, color: "#cab2d6" },
+        { step:  30, color: "#6a3d9a" },
+        { step:  40, color: "#ffff99" },
+        { step:  50, color: "#fdbf6f" },
+        { step:  75, color: "#ff7f00" },
+        { step: 100, color: "#fb9a99" },
+        { step: 150, color: "#e31a1c" },
+        { step: 200, color: "#000" }
+    ]);
+
     var drawLayer = function(layerNum, fromProgress, toProgress, isNextLayer){
         var i, speedIndex= 0, prevZ = 0;
         isNextLayer = typeof isNextLayer !== 'undefined' ? isNextLayer : false;
@@ -401,6 +449,7 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
 //        ctx.strokeStyle = renderOptions["colorLine"];
         for(i=fromProgress;i<=toProgress;i++){
             ctx.lineWidth = 1;
+            var color;
 
             if(typeof(cmds[i]) === 'undefined')continue;
 
@@ -413,48 +462,52 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
             else x = cmds[i].x;
             if(typeof(cmds[i].y) === 'undefined'||isNaN(cmds[i].y))y=prevY/zoomFactor;
             else y = -cmds[i].y;
-            if(renderOptions["differentiateColors"]&&!renderOptions['showNextLayer']&&!renderOptions['renderAnalysis']){
-//                if(speedsByLayer['extrude'][prevZ]){
-                if(renderOptions['speedDisplayType'] === displayType.speed){
+
+            // choose rendering color
+            if (renderOptions["differentiateColors"] && !renderOptions['showNextLayer'] && !renderOptions['renderAnalysis']) {
+                // 1. render colors
+
+                if (renderOptions['speedDisplayType'] === displayType.speed) {
                     speedIndex = speeds['extrude'].indexOf(cmds[i].speed);
-                }else if(renderOptions['speedDisplayType'] === displayType.expermm){
+                    color = speedScale((parseFloat(cmds[i].speed) / 60).toFixed(2));
+                } else if (renderOptions['speedDisplayType'] === displayType.expermm) {
                     speedIndex = volSpeeds.indexOf(cmds[i].volPerMM);
-                }else if(renderOptions['speedDisplayType'] === displayType.volpersec){
-                    speedIndex = extrusionSpeeds.indexOf((cmds[i].volPerMM*cmds[i].speed).toFixed(3));
-                }else{
-                    speedIndex=0;
+                } else if (renderOptions['speedDisplayType'] === displayType.volpersec) {
+                    speedIndex = extrusionSpeeds.indexOf((cmds[i].volPerMM * cmds[i].speed).toFixed(3));
+                } else {
+                    speedIndex = 0;
                 }
 //                    speedIndex = GCODE.ui.ArrayIndexOf(speedsByLayer['extrude'][prevZ], function(obj) {return obj.speed === cmds[i].speed;});
 //                } else {
 //                    speedIndex = -1;
 //                }
-                if(speedIndex === -1){
+                if (speedIndex === -1) {
                     speedIndex = 0;
-                }else if(speedIndex > renderOptions["colorLineLen"] -1){
-                    speedIndex = speedIndex % (renderOptions["colorLineLen"]-1);
-    //                console.log("Too much colors");
+                } else if (speedIndex > renderOptions["colorLineLen"] - 1) {
+                    speedIndex = speedIndex % (renderOptions["colorLineLen"] - 1);
+                    //                console.log("Too much colors");
                 }
-            }else if(renderOptions['showNextLayer']&&isNextLayer){
-                speedIndex=3;
-            }else if(renderOptions['renderErrors']){
-                if(cmds[i].errType === 2){
-                    speedIndex=9;
+            } else if (renderOptions['showNextLayer'] && isNextLayer) {
+                speedIndex = 3;
+            } else if (renderOptions['renderErrors']) {
+                if (cmds[i].errType === 2) {
+                    speedIndex = 9;
 //                    console.log("l: " + layerNum + " c: " + i);
-                }else if(cmds[i].errType === 1){
-                    speedIndex=10;
-                }else{
-                    speedIndex=0;
+                } else if (cmds[i].errType === 1) {
+                    speedIndex = 10;
+                } else {
+                    speedIndex = 0;
                 }
-            }else if(renderOptions['renderAnalysis']){
+            } else if (renderOptions['renderAnalysis']) {
 //                if(cmds[i].errType === 2){
 //                    speedIndex=-1;
 //                }else{
 //                    speedIndex=0;
 //                }
-                if(layerNum !== 0)speedIndex = -1;
-                else speedIndex=0;
-            }else{
-                speedIndex=0;
+                if (layerNum !== 0)speedIndex = -1;
+                else speedIndex = 0;
+            } else {
+                speedIndex = 0;
             }
 
 
@@ -486,7 +539,11 @@ GCODE.renderer = (function(canvasRoot, config, bindToView, eventManager){
             else if(cmds[i].extrude){
                 if(cmds[i].retract==0){
                     if(speedIndex>=0){
-                        ctx.strokeStyle = renderOptions["colorLine"][speedIndex];
+                        if (color) {
+                            ctx.strokeStyle = color;
+                        } else {
+                            ctx.strokeStyle = renderOptions["colorLine"][speedIndex];
+                        }
                     }else if(speedIndex===-1){
                         var val = parseInt(cmds[i].errLevelB).toString(16);
 //                        var val = '8A';
