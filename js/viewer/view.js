@@ -717,6 +717,30 @@ GCODE.view = (function (viewName, domRoot, app) {
     }, false));
 
     /**
+     * Export function
+     */
+    var exportXYZ = function() {
+        var model = gcode.getModel();
+        var e = "";
+        var id = 0;
+        for (var layer = 0; layer < model.length; layer++) {
+            for (var point = 0; point < model[layer].length; point++) {
+                var p = model[layer][point];
+                e += [id, p.x, p.y, p.z].join(",") + "\n";
+                id++;
+            }
+        }
+
+        // download
+        var pom = document.createElement('a');
+        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(e));
+        pom.setAttribute('download', "gcode.txt");
+        pom.click();
+    };
+    events.view.exportXYZ.add(_ifAffected(exportXYZ));
+
+
+    /**
      * Returns the views name.
      *
      * @returns {string}

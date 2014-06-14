@@ -414,6 +414,10 @@ GCODE.ui = (function (app, eventManager) {
                 // s key
                 event.preventDefault();
                 $("#sync").click();
+            } else if (event.keyCode === 69) {
+                // e key
+                event.preventDefault();
+                events.view.exportXYZ.dispatch("", event);
             }
         });
 

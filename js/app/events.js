@@ -43,7 +43,10 @@ GCODE.events = (function () {
                 cropSnapshot: new Signal(),
                 /** event used to trigger the download of all snapshots */
                 downloadSnapshots: new Signal()
-            }
+            },
+
+            /** Export XYZ file */
+            exportXYZ: new Signal()
         },
 
         /** Used to change the current active view pane */
