@@ -137,7 +137,7 @@ body {
   right: 0;
   z-index: 10;
 
-  ul.metrics {
+  ul.metrics.old {
     list-style-type: none;
     li {
       float: left;
@@ -163,7 +163,7 @@ body {
     cursor: pointer;
   }
 
-  ul {
+  ul.old {
     list-style-type: none;
     margin: 0;
     padding: 0;
@@ -180,7 +180,7 @@ body {
     margin-top: 10px;
   }
 
-  .colorbox {
+  .colorbox_odl {
     $size: 20px;
 
     height: $size;
@@ -301,6 +301,7 @@ body {
     background: #428bca;
     @include opacity(1);
     @include box-shadow(none);
+    @include transition(all 0.3s ease-out);
   }
   .slider-disabled .slider-handle {
     background: #CCC;
@@ -352,4 +353,144 @@ body {
     max-width: 100%;
     max-height: 100%;
   }
+}
+
+.toolbar {
+
+  $bg: #fff;
+  $fg: #999;
+  $lines: #CCC;
+  $height: 50px;
+  $toolPadding: 20px;
+  $dropdownIconWidth: 30px;
+
+  left: 0px;
+  position: absolute;
+  top: 0px;
+  background-color: $bg;
+  height: $height + 1;
+  overflow: visible;
+  color: $fg;
+  width: auto;
+  border-bottom: 1px solid $lines;
+  border-right: 1px solid $lines;
+
+  .tool {
+    // tool styling
+    display: inline-block;
+    height: $height;
+    line-height: $height;
+    float: left;
+    padding: 0px $toolPadding;
+    position: relative;
+    border-right: 1px solid $lines;
+    @include box-sizing(border-box);
+    @include transition(ease all 0.3s);
+
+    &:last-child {
+      border-right: none;
+    }
+    &:hover {
+      background-color: darken($bg, 3);
+    }
+
+    // tool footnotes
+    .tool-footnote {
+      position: absolute;
+      left: $toolPadding;
+      bottom: 2px;
+      font-size: 9px;
+      line-height: 9px;
+      margin: 0;
+    }
+
+    // tool dropdown feature
+    &.tool-dropdown {
+      padding-right: $toolPadding / 2 + $dropdownIconWidth;
+      &:after {
+        content: "\f13a";
+        font-family: FontAwesome;
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: inline-block;
+        width: $dropdownIconWidth;
+        height: $height;
+        line-height: $height;
+        text-align: center;
+        font-size: $height / 3;
+      }
+    }
+    .tool-dropdown-content {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: $height + 1;
+      height: auto;
+      display: none;
+    }
+    &.tool-dropdown-open .tool-dropdown-content {
+      display: block;
+    }
+    &.tool-dropdown-open:after {
+      content: "\f139";
+    }
+
+    ul {
+      padding: 0;
+      margin: 0;
+    }
+  }
+}
+
+.colorbox, .colorbox .color {
+  color: #FFF;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+}
+
+.metric {
+  $size: 90px;
+  $height: $size;
+
+  $titleHeight: 0.3 * $height;
+  $iconHeight: 0.4 * $height;
+  $valueHeight: 0.3 * $height;
+
+  width: $size;
+  height: $height;
+  position: relative;
+  float: left;
+  display: inline-block;
+  background-color: #FFF;
+
+  .title, i, .value {
+    display: block;
+    text-align: center;
+    line-height: normal;
+    width: 100%;
+
+  }
+
+  .title {
+    font-size: 9px;
+    text-transform: uppercase;
+    line-height: $titleHeight;
+    letter-spacing: -0.6px;
+    height: $titleHeight;
+    background-color: #EEE;
+  }
+  i {
+    height: $iconHeight;
+    line-height: $iconHeight;
+    font-size: $iconHeight * 0.5;
+  }
+  .value {
+    height: $valueHeight;
+    line-height: $valueHeight;
+  }
+
 }

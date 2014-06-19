@@ -86,6 +86,11 @@ GCODE.view = (function (viewName, domRoot, app) {
     var layerInfoToolbar;
 
     /**
+     * The toolbar for the color legend
+     */
+    var colorLegendToolbar;
+
+    /**
      * Holds the snapshot service
      * @type {GCODE.snapshot}
      */
@@ -120,36 +125,36 @@ GCODE.view = (function (viewName, domRoot, app) {
 
         /** tab content for 2d rendering */
         tab2d: _.template('\
-            <div class="toolbar toolbar-closeable gcode-selector">\
-                <div class="panel panel-default">\
-                    <div class="panel-heading">\
-                        <i class="fa fa-chevron-circle-down"></i> <span class="label label-default loaded-slicer"></span> <span class="loaded-gcode">Choose gCode to display</span>\
-                        <span class="label label-primary pull-right loaded-line">\
-                            <span class="loaded-line-first"></span> - <span class="loaded-line-last"></span>\
-                        </span>\
-                    </div>\
-                    <div class="panel-body hide">\
+            <div class="toolbar">\
+                <div class="tool tool-toggl color-legend" style="width: 50px;">\
+                    <i class="fa fa-tint"></i>\
+                     <div class="tool-dropdown-content">\
+                        <div class="extrudeSpeeds"></div>\
+                     </div>\
+                </div>\
+                <div class="tool tool-dropdown gcode-selector">\
+                    <span class="loaded-gcode">Choose gCode to display</span>\
+                    <p class="tool-footnote loaded-line">\
+                        <span class="loaded-slicer"></span>, <span class="loaded-line-first"></span> - <span class="loaded-line-last"></span>\
+                    </p>\
+                    <div class="tool-dropdown-content">\
                         <ul class="gcode-select"></ul>\
                     </div>\
                 </div>\
-            </div>\
-            <div class="toolbar toolbar-right toolbar-closeable layer-info">\
-                <div class="panel panel-default">\
-                    <div class="panel-heading">\
-                        <i class="fa fa-chevron-circle-down"></i> Layer info\
-                        <span class="label label-primary">\
-                            <span class="curLayer">0</span> / <span class="maxLayer"></span>\
-                        </span>\
-                    </div>\
-                    <div class="panel-body hide">\
+                <div class="tool tool-dropdown layer-info" style="width: 181px;">\
+                    Layer info\
+                    <p class="tool-footnote">\
+                        <span class="curLayer">0</span> / <span class="maxLayer"></span>\
+                    </p>\
+                    <div class="tool-dropdown-content">\
                         <ul class="metrics"></ul>\
-                        <strong>Extrude speeds:</strong>\
-                        <div class="extrudeSpeeds"></div>\
-                        <strong>Move speeds:</strong>\
-                        <div class="moveSpeeds"></div>\
-                        <strong>Retract speeds:</strong>\
-                        <div class="retractSpeeds"></div>\
                     </div>\
+                </div>\
+                <div class="tool" data-trigger="view.renderer2d.snapshot">\
+                    <i class="fa fa-camera"></i>\
+                </div>\
+                <div class="tool" data-trigger="view.exportXYZ">\
+                    <i class="fa fa-share-square-o"></i>\
                 </div>\
             </div>\
             <div class="scrollbar">\
@@ -178,15 +183,18 @@ GCODE.view = (function (viewName, domRoot, app) {
 
         /** 2D model info: used to render a single metric */
         li: _.template('\
-            <li title="<%= tooltip %>" data-toggle="tooltip" data-placement="top">\
-                <i class="fa fa-<%= icon %>"></i> <%= metric %>\
+            <li class="metric">\
+                <span class="title"><%= tooltip %></span>\
+                <i class="fa fa-<%= icon %>"></i>\
+                <span class="value"><%= metric %></span>\
             </li>'),
 
         /** 2D model info: used to render extrusion/move speeds */
         colorBox: _.template('\
             <div class="colorbox">\
-                <div class="color" style="background-color: <%= color %>"></div>\
-                <span><%= speed %></span>\
+                <div class="color" style="background-color: <%= color %>">\
+                    <span><%= speed %></span>\
+                </div>\
             </div>'),
 
         /** 2D model info: used to render retract speeds. */
@@ -217,17 +225,15 @@ GCODE.view = (function (viewName, domRoot, app) {
         var iconClose = "fa-chevron-circle-up";
 
         var isOpen = function() {
-            return !toolbar.find(".panel-body").hasClass("hide");
+            return toolbar.hasClass("tool-dropdown-open");
         }
 
         var open = function() {
-            toolbar.find("." + iconOpen).removeClass(iconOpen).addClass(iconClose);
-            toolbar.find(".panel-body").removeClass("hide");
+            toolbar.addClass("tool-dropdown-open");
         };
 
         var close = function() {
-            toolbar.find("." + iconClose).removeClass(iconClose).addClass(iconOpen);
-            toolbar.find(".panel-body").addClass("hide");
+            toolbar.removeClass("tool-dropdown-open");
         }
 
         var toggle = function() {
@@ -237,7 +243,7 @@ GCODE.view = (function (viewName, domRoot, app) {
                 open();
             }
         }
-        toolbar.find(".panel-heading").click(toggle);
+        toolbar.click(toggle);
 
         return {
             toggle: toggle,
@@ -351,7 +357,7 @@ GCODE.view = (function (viewName, domRoot, app) {
         return prepareHelper(z, renderOptions, layerSpeeds['extrude'][z], function (layerSpeed, speedIndex) {
             return {
                 color: colors[speedIndex],
-                speed: (parseFloat(layerSpeed) / 60).toFixed(2) + " mm/s"
+                speed: (parseFloat(layerSpeed) / 60).toFixed(2)
             };
         });
     }
@@ -415,17 +421,17 @@ GCODE.view = (function (viewName, domRoot, app) {
             metric: z + "mm"
         });
         metrics += templates.li({
-            tooltip: "GCODE commands in layer",
+            tooltip: "GCODE commands",
             icon: "code",
             metric: segments
         });
         metrics += templates.li({
-            tooltip: "Filament used by layer",
+            tooltip: "Filament used",
             icon: "dashboard",
             metric: filament.toFixed(2) + "mm"
         });
         metrics += templates.li({
-            tooltip: "Print time for layer",
+            tooltip: "Print time",
             icon: "clock-o",
             metric: parseFloat(gcode.getModelInfo().printTimeByLayer[z]).toFixed(1) + "sec"
         });
@@ -452,15 +458,15 @@ GCODE.view = (function (viewName, domRoot, app) {
         } else if (renderOptions['speedDisplayType'] == displayType.volpersec) {
             exSpeed = prepareVolPerSecInfo(z, renderOptions);
         }
-        root.find(".layer-info .extrudeSpeeds").html(_toHtml(exSpeed, templates.colorBox));
+        root.find(".extrudeSpeeds").html(_toHtml(exSpeed, templates.colorBox));
 
         // move speeds
         var moveSpeed = prepareMoveSpeeds(z, renderOptions);
-        root.find(".layer-info .moveSpeeds").html(_toHtml(moveSpeed, templates.colorBox));
+        root.find(".moveSpeeds").html(_toHtml(moveSpeed, templates.colorBox));
 
         // retract speeds
         var retractSpeed = prepareRetractSpeeds(z, renderOptions);
-        root.find(".layer-info .retractSpeeds").html(_toHtml(retractSpeed, templates.colorBoxRetract));
+        root.find(".retractSpeeds").html(_toHtml(retractSpeed, templates.colorBoxRetract));
     };
 
     /**
@@ -657,6 +663,22 @@ GCODE.view = (function (viewName, domRoot, app) {
         // toolbar closeable event handler
         gCodeSelectToolbar = new Toolbar(root.find(".gcode-selector"));
         layerInfoToolbar = new Toolbar(root.find(".layer-info"));
+        colorLegendToolbar = new Toolbar(root.find(".color-legend"));
+    };
+
+    var initEventTriggers = function() {
+        root.find("[data-trigger]").click(function(e) {
+            var eventPath = $(this).attr("data-trigger").split(".");
+            var event = events;
+            for (var cur = 0; cur < eventPath.length; cur++) {
+                if (!(eventPath[cur] in event)) {
+                    console.log("Event " + $(this).attr("data-trigger") + " cannot be triggered!");
+                    return;
+                }
+                event = event[eventPath[cur]];
+            }
+            event.dispatch(name, e);
+        });
     };
 
     /**
@@ -832,6 +854,7 @@ GCODE.view = (function (viewName, domRoot, app) {
         root.html(createViewHtml());
         init2d();
         init3d();
+        initEventTriggers();
         gCodeChanged();
         updateGCodeSelectBox();
         snapshotService = new GCODE.snapshot(app, self);
