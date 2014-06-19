@@ -732,10 +732,8 @@ GCODE.view = (function (viewName, domRoot, app) {
         }
 
         // download
-        var pom = document.createElement('a');
-        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(e));
-        pom.setAttribute('download', "gcode.txt");
-        pom.click();
+        var gcodeBlob = new Blob([e], {type: "text/plain;charset=utf-8"});
+        saveAs(gcodeBlob, gcode.getName() + ".xyz");
     };
     events.view.exportXYZ.add(_ifAffected(exportXYZ));
 

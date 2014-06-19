@@ -108,19 +108,18 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         app.getConfig().drawGrid.set(oldDrawGrid);
 
         // get image
-        return destinationCanvas.toDataURL("image/png");
+        return destinationCanvas;
     }
 
     /**
      * Trigger snapshot download
      */
     var download = function () {
-        var img = toPNG(true);
+        var imgCanvas = toPNG(true);
         var filename = createFileName();
-        var a = document.createElement("a");
-        a.download = filename;
-        a.href = img;
-        a.click();
+        imgCanvas.toBlob(function(snapshotBlob) {
+            saveAs(snapshotBlob, filename);
+        });
     };
 
     /**
@@ -134,7 +133,7 @@ GCODE.snapshot = function (gCodeApp, bindToView) {
         }
 
         // set new image
-        var img = toPNG();
+        var img = toPNG().toDataURL("image/png");
         root.find("img.snapshot").attr("src", img);
 
         _.defer(function () {
