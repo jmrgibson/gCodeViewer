@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>gcode viewer - online gcode viewer and analyzer in your browser!</title>
@@ -13,7 +13,7 @@
     <link rel="canonical" href="http://gcode.ws/" />
 
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen" />
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <!--<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">-->
     <link rel="stylesheet" type="text/css" href="lib/codemirror.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="css/gCodeViewer.css" media="screen" />
 
@@ -32,6 +32,7 @@
     <script type="text/javascript" src="js/renderer.js"></script>
     <script type="text/javascript" src="js/analyzer.js"></script>
     <script type="text/javascript" src="js/renderer3d.js"></script>
+    <script type="text/javascript" src="js/printinterface.js"></script>
 
     <meta property="og:title" content="gCodeViewer - online gcode viewer and analyzer!" />
     <meta property="og:type" content="website" />
@@ -42,6 +43,25 @@
 
 </head>
 <body>
+    <style>
+        textarea {
+            resize: none;
+            background-color: rgb(240, 240, 240);
+            color: rgb(60,60,60);
+            font-family: "Courier New";
+            font-size: 14px;
+        }
+        #textareabox {
+            width: 539px;
+            padding-left: 25px;
+            padding-right: 25px;
+            max-width: 539px;
+        }
+        #app {
+            
+            position:relative;
+        }
+    </style>
 
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container-fluid">
@@ -72,23 +92,10 @@
 
         <ul class="nav navbar-nav navbar-right">
             <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preferences</a></li>
-            <li class="dropdown">
-                <a href="#"
-                   class="dropdown-toggle"
-                   data-toggle="dropdown">
-                    Spread the word
-                    <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                    <li class="socials">Facebook</li>
-                    <li class="socials">Google Plus</li>
-                    <li class="socials">Twitter</li>
-                </ul>
-            </li>
         </ul>
     </div>
 </div>
-
+ 
 
 <div id="app">
     <div id="control" style="display: none;">
@@ -119,6 +126,18 @@
     <div id="gcode">
         <div id="tabs-min" class="tabbable">
             <div class="tab-content">
+                <div class="tab-pane" id="tab3d">
+                    <div id="mancontroldiv" style="width:539px;">
+                        <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
+                        <map name="jogmap" id="jogmap">
+                            <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
+                        </map>
+                        <div id="textareabox">
+                            <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
+                            <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
+                        </div>
+                    </div>
+                </div>
                 <div class="tab-pane" id="tab2d">
                     <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
                         <div class="panel panel-default">
@@ -152,18 +171,20 @@
                     </div>
                     <canvas id="canvas"></canvas>
                 </div>
-                <div class="tab-pane" id="tab3d">
-                    <div id="3d_container"></div>
-                </div>
+
                 <div class="tab-pane" id="tabGCode">
                     <div id="gCodeContainer"></div>
                 </div>
                 <div class="tab-pane active" id="tabAbout">
                     <div class="container">
-                        <h1 class="logo"><img src="img/logo.png" alt="GCode Viewer" /></h1>
-                        <b>gCodeViewer</b> is a visual GCode visualizer, viewer and analyzer in your own browser! It works on any OS in almost any modern browser (chrome, ff, safari 6, opera, ie10 should work too). All you need to do - is drag your *.gcode file to the designated zone.<br /><br />
+                        <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
+                        <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
+                        that allows you to manually control the printer, upload a file to print, change settings and preview the print job. 
+                        It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
                         Current features include:<br />
                         <ul>
+                            <li>.DXF file processing</li>
+                                <ul>Upload files created in EagleCAD, CREO, Solidworks, Adobe Illustrator </ul>
                             <li>Visualize GCode in 2D, layer by layer
                                 <ul>
                                     <li>Show retracts and restarts</li>
@@ -181,14 +202,11 @@
                                 </ul>
                             </li>
                             <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
-                            <li>3D visualization (I don't know what for, it's dull and useless.. need to rewrite it from scratch)</li>
-                            <li>And yeah, it's slow, memory hungry and only supports modern browsers</li>
+                            <li>Only supports modern browsers</li>
                             <li>Totally open source so you can use it as you like</li>
                         </ul>
                         <br /><br />
-                        All sources are available at <a href="https://github.com/hudbrog/gCodeViewer">https://github.com/hudbrog/gCodeViewer</a><br />
-                        If you find any bugs or have feature requests - don't hesitate to post them to <a href="https://github.com/hudbrog/gCodeViewer/issues">https://github.com/hudbrog/gCodeViewer/issues</a><br />
-                        And I would appreciate if you like it on Thingiverse page: <a href="http://www.thingiverse.com/thing:35248">http://www.thingiverse.com/thing:35248</a><br />
+                        All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
                     </div>
 
                 </div>
@@ -376,22 +394,6 @@
     </div>
 </div>
 
-<div id="mobile-notification" class="visible-xs visible-sm visible-md">
-    <div class="modal show">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title">GCode Viewer</h1>
-                </div>
-                <div class="modal-body">
-                    <i class="fa fa-desktop"></i>
-                    <p>We are very sorry, but to use the GCode Viewer your screen has to have a higher resolution.</p>
-                    <div class="alert alert-info"><i class="fa fa-info-circle"></i> Try browsing this site with your desktop computer.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
 $(function() {
