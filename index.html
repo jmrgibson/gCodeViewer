@@ -47,359 +47,400 @@
         textarea {
             resize: none;
             background-color: rgb(240, 240, 240);
-            color: rgb(60,60,60);
+            color: rgb(20,20,20);
             font-family: "Courier New";
             font-size: 14px;
         }
+
         #textareabox {
             width: 539px;
             padding-left: 25px;
             padding-right: 25px;
             max-width: 539px;
         }
-        #app {
-            
-            position:relative;
+
+        #lefthandcontrol {
+            float: left;
+            width: 540px;
+            padding: 5px 5px;
         }
+
+        #righthandcontrol {
+            margin-left: 550px;
+
+
+        }
+        
+        #settingsdiv {
+            position: absolute;
+            right: 550px;
+            float: right;
+            padding-left: 20px;
+            padding-top: 20px;
+            padding-right: 20px;
+        }
+
+        #app {
+            position: relative;
+        }
+
+
     </style>
 
-<div class="navbar navbar-default navbar-fixed-top" role="navigation">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <a class="navbar-brand" href="#">GCode Viewer</a>
-        </div>
-
-        <ul class="nav navbar-nav" id="tab-nav">
-            <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
-            <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D</a></li>
-            <li class="clickOnResize"><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> 3D</a></li>
-            <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode</a></li>
-            <li class="gcode-init">
-                <input type="file" id="file" name="files" style="display: none;" />
-                <div class="gcode-drop" id="drop_zone">
-                    <i class="fa fa-upload"></i> Drag GCode here
-                </div>
-                <div class="gcode-progress">
-                    <div class="progress">
-                        <div id="loadProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
-                    </div>
-                    <div class="progress">
-                        <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
-                    </div>
-                </div>
-            </li>
-        </ul>
-
-        <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preferences</a></li>
-        </ul>
-    </div>
-</div>
- 
-
-<div id="app">
-    <div id="control" style="display: none;">
-        <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
-        <div id="accordion2" class="panel-group">
-            <div class="panel panel-default hide" id="errAnalyseTab">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <a data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
-                            Error Analysis
-                        </a>
-                    </h4>
-                </div>
-                <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
-                    <div class="panel-body">
-                        <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()"/>Run analysis</button>
-                        <div id="analysisOptionsDiv" class="hide">
-                            <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
-                        </div>
-                    </div>
-                </div>
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">GCode Viewer</a>
             </div>
 
+            <ul class="nav navbar-nav" id="tab-nav">
+                <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
+                <!--<li class="clickOnResize"><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> Manual Control</a></li>-->
+                <li><a href="#tabControl" data-toggle="tab"><i class="fa fa-arrows"></i> Printer Control</a></li>
+                <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D Preview</a></li>
+                <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode Viewer</a></li>
+                <!--<li class="gcode-init">
+                    <input type="file" id="file" name="files" style="display: none;" />
+                    <div class="gcode-drop" id="drop_zone">
+                        <i class="fa fa-upload"></i> Drag File here
+                    </div>
+                    <div class="gcode-progress">
+                        <div class="progress">
+                            <div id="loadProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
+                        </div>
+                        <div class="progress">
+                            <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
+                        </div>
+                    </div>
+                </li>-->
+            </ul>
 
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preferences</a></li>
+            </ul>
         </div>
-        <output id="errorList"></output>
     </div>
-    <div id="gcode">
-        <div id="tabs-min" class="tabbable">
-            <div class="tab-content">
-                <div class="tab-pane" id="tab3d">
-                    <div id="mancontroldiv" style="width:539px;">
-                        <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
-                        <map name="jogmap" id="jogmap">
-                            <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
-                        </map>
-                        <div id="textareabox">
-                            <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
-                            <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
-                        </div>
+
+
+    <div id="app">
+        <div id="control" style="display: none;">
+            <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
+            <div id="accordion2" class="panel-group">
+                <div class="panel panel-default hide" id="errAnalyseTab">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
+                                Error Analysis
+                            </a>
+                        </h4>
                     </div>
-                </div>
-                <div class="tab-pane" id="tab2d">
-                    <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                Layer info
-                                <span class="label label-primary">
-                                    <span class="curLayer">0</span> / <span class="maxLayer"></span>
-                                </span>
-                            </div>
-                            <div class="panel-body">
-                                <ul class="metrics"></ul>
-                                <strong>Extrude speeds:</strong>
-                                <div class="extrudeSpeeds"></div>
-
-                                <strong>Move speeds:</strong>
-                                <div class="moveSpeeds"></div>
-
-                                <strong>Retract speeds:</strong>
-                                <div class="retractSpeeds"></div>
+                    <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()" />Run analysis</button>
+                            <div id="analysisOptionsDiv" class="hide">
+                                <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
                             </div>
                         </div>
                     </div>
-                    <div class="scrollbar">
-                        <div class="scrollbar-group">
-                            <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>
-                            <div class="scrollbar-control">
-                                <input id="layer-scrollbar" value="" data-slider-id='layer-scrollbar' type="text" />
-                            </div>
-                            <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>
-                        </div>
-                    </div>
-                    <canvas id="canvas"></canvas>
                 </div>
 
-                <div class="tab-pane" id="tabGCode">
-                    <div id="gCodeContainer"></div>
-                </div>
-                <div class="tab-pane active" id="tabAbout">
-                    <div class="container">
-                        <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
-                        <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
-                        that allows you to manually control the printer, upload a file to print, change settings and preview the print job. 
-                        It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
-                        Current features include:<br />
-                        <ul>
-                            <li>.DXF file processing</li>
+
+            </div>
+            <output id="errorList"></output>
+        </div>
+        <div id="gcode">
+            <div id="tabs-min" class="tabbable">
+                <div class="tab-content">
+                    <div class="tab-pane" id="tabControl">
+                        <div id="lefthandcontrol">
+                            <div id="mancontroldiv" onload="initSettings()">
+                                <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
+                                <map name="jogmap" id="jogmap">
+                                    <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
+                                </map>
+                                <div id="textareabox">
+                                    <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
+                                    <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="righthandcontrol">
+
+                            <div id="settingsdiv"></div>
+                            <ul>
+                                <li class="gcode-init">
+                                    <input type="file" id="file" name="files" style="display: none;" />
+                                    <div class="gcode-drop" id="drop_zone">
+                                        <i class="fa fa-upload"></i> Drag File here
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab2d">
+                        <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Layer info
+                                    <span class="label label-primary">
+                                        <span class="curLayer">0</span> / <span class="maxLayer"></span>
+                                    </span>
+                                </div>
+                                <div class="panel-body">
+                                    <ul class="metrics"></ul>
+                                    <strong>Extrude speeds:</strong>
+                                    <div class="extrudeSpeeds"></div>
+
+                                    <strong>Move speeds:</strong>
+                                    <div class="moveSpeeds"></div>
+
+                                    <strong>Retract speeds:</strong>
+                                    <div class="retractSpeeds"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scrollbar">
+                            <div class="scrollbar-group">
+                                <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>
+                                <div class="scrollbar-control">
+                                    <input id="layer-scrollbar" value="" data-slider-id='layer-scrollbar' type="text" />
+                                </div>
+                                <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>
+                            </div>
+                        </div>
+                        <canvas id="canvas"></canvas>
+                    </div>
+
+                    <div class="tab-pane" id="tabGCode">
+                        <div id="gCodeContainer"></div>
+                    </div>
+                    <div class="tab-pane active" id="tabAbout">
+                        <div class="container">
+                            <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
+                            <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
+                            that allows you to manually control the printer, upload a file to print, change settings and preview the print job.
+                            It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
+                            Current features include:<br />
+                            <ul>
+                                <li>.DXF file processing</li>
                                 <ul>Upload files created in EagleCAD, CREO, Solidworks, Adobe Illustrator </ul>
-                            <li>Visualize GCode in 2D, layer by layer
-                                <ul>
-                                    <li>Show retracts and restarts</li>
-                                    <li>Show print/move/retract speeds</li>
-                                    <li>Display only part of layer, animate sequence of layer printing</li>
-                                    <li>Show two layers simultaneously so you can check overhangs</li>
-                                    <li>Adjust line width to simulate print more closely</li>
-                                    <li><b>Gcode viewer will try to parse nozzle and filament diameters from gcode, but it may fail to do so. In that case you will need to set it manually in 'Printer Info' tab</b></li>
-                                </ul>
-                            </li>
-                            <li>Analyze GCode
-                                <ul>
-                                    <li>Print time, amount of plastic used, layer height, etc. for whole file and for single layer</li>
-                                    <li>Reference visualized part to GCode file (i.e. select a certain part of 2d visualization, switch to GCode view - it will highlight list of lines responsible for visualized piece)</li>
-                                </ul>
-                            </li>
-                            <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
-                            <li>Only supports modern browsers</li>
-                            <li>Totally open source so you can use it as you like</li>
-                        </ul>
-                        <br /><br />
-                        All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="status">
-    <div class="container-fluid">
-        <ul class="metrics" id="metrics-list"></ul>
-    </div>
-</div>
-
-<div class="modal fade" id="preferences-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="myModalLabel"><i class="fa fa-cog"></i> Preferences</h4>
-            </div>
-            <div class="modal-body">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">Printer Info</div>
-                    <div class="panel-body">
-                        <form role="form" class="form-horizontal">
-                            <div class="form-group">
-                                <label for="filamentDia" class="col-sm-3 control-label">Plastic diameter:</label>
-                                <div class="col-sm-9">
-                                    <input type="text" value="1.75" id="filamentDia" onchange="GCODE.ui.processOptions()" class="form-control" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">Plastic type:</label>
-                                <div class="col-sm-9">
-                                    <div class="btn-group" data-toggle="buttons">
-                                        <label class="btn btn-default active">
-                                            <input type="radio" name="radPlastic" id="plasticABS" value="ABS" onclick="GCODE.ui.processOptions()" checked> ABS
-                                        </label>
-                                        <label class="btn btn-default">
-                                            <input type="radio" name="radPlastic" id="plasticPLA" value="PLA" onclick="GCODE.ui.processOptions()"> PLA
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="nozzleDia" class="col-sm-3 control-label">Nozzle size:</label>
-                                <div class="col-sm-9">
-                                    <input type="text" value="0.4" id="nozzleDia" onchange="GCODE.ui.processOptions()" class="form-control" />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="panel panel-primary">
-                    <div class="panel-heading">2D Render options</div>
-                    <div class="panel-body">
-                        <form role="form" class="form-horizontal">
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">Speed display type: </label>
-                                <div class="col-sm-9">
-                                    <div class="btn-group" data-toggle="buttons">
-                                        <label class="btn btn-default active">
-                                            <input type="radio" name="speedDisplay" id="speedDisplayRadio" value="1"  onclick="GCODE.ui.processOptions()" checked> mm/sec
-                                        </label>
-                                        <label class="btn btn-default">
-                                            <input type="radio" name="speedDisplay" id="exPerMMRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm extrusion per mm move
-                                        </label>
-                                        <label class="btn btn-default">
-                                            <input type="radio"  name="speedDisplay" id="volPerSecRadio" value="1"  onclick="GCODE.ui.processOptions()" > mm^3/sec
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">What to display:</label>
-                                <div class="col-sm-9">
-                                    <div class="checkbox">
-                                        <label for="showMovesCheckbox">
-                                            <input type="checkbox" id="showMovesCheckbox" value="1"  onclick="GCODE.ui.processOptions()" checked>
-                                            Show non-extrusion moves
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="showRetractsCheckbox">
-                                            <input type="checkbox" id="showRetractsCheckbox" value="2" onclick="GCODE.ui.processOptions()" checked>
-                                            Show retracts and restarts
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="differentiateColorsCheckbox">
-                                            <input type="checkbox" id="differentiateColorsCheckbox" value="7"  onclick="GCODE.ui.processOptions()" checked>
-                                            Show different speeds with different colors
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="showNextLayer">
-                                            <input type="checkbox" id="showNextLayer" value="9"  onclick="GCODE.ui.processOptions()" >
-                                            Show +1 layer
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">Adjust display:</label>
-                                <div class="col-sm-9">
-                                    <div class="checkbox">
-                                        <label for="moveModelCheckbox">
-                                            <input type="checkbox" id="moveModelCheckbox" value="3"  onclick="GCODE.ui.processOptions()" checked>
-                                            Move model to the center of the grid
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="thickExtrusionCheckbox">
-                                            <input type="checkbox" id="thickExtrusionCheckbox" value="8"  onclick="GCODE.ui.processOptions()">
-                                            Emulate extrusion width
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="alphaCheckbox">
-                                            <input type="checkbox" id="alphaCheckbox" value="10"  onclick="GCODE.ui.processOptions()" >
-                                            Render lines slightly transparent
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="panel panel-primary">
-                    <div class="panel-heading">GCode analyzer options</div>
-                    <div class="panel-body">
-                        <div class="alert alert-warning">
-                            <strong><i class="fa fa-warning"></i> Attention:</strong>
-                            Changing these settings requires re-analyzing your GCode file.
+                                <li>
+                                    Visualize GCode in 2D, layer by layer
+                                    <ul>
+                                        <li>Show retracts and restarts</li>
+                                        <li>Show print/move/retract speeds</li>
+                                        <li>Display only part of layer, animate sequence of layer printing</li>
+                                        <li>Show two layers simultaneously so you can check overhangs</li>
+                                        <li>Adjust line width to simulate print more closely</li>
+                                        <li><b>Gcode viewer will try to parse nozzle and filament diameters from gcode, but it may fail to do so. In that case you will need to set it manually in 'Printer Info' tab</b></li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Analyze GCode
+                                    <ul>
+                                        <li>Print time, amount of plastic used, layer height, etc. for whole file and for single layer</li>
+                                        <li>Reference visualized part to GCode file (i.e. select a certain part of 2d visualization, switch to GCode view - it will highlight list of lines responsible for visualized piece)</li>
+                                    </ul>
+                                </li>
+                                <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
+                                <li>Only supports modern browsers</li>
+                                <li>Totally open source so you can use it as you like</li>
+                            </ul>
+                            <br /><br />
+                            All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
                         </div>
-                        <form role="form" class="form-horizontal">
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">Enhanced options:</label>
-                                <div class="col-sm-9">
-                                    <div class="checkbox">
-                                        <label for="sortLayersCheckbox">
-                                            <input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>
-                                            Sort layers by Z
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="purgeEmptyLayersCheckbox">
-                                            <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5"  onclick="GCODE.ui.processOptions()" checked>
-                                            Hide empty layers
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label for="showGCodeCheckbox">
-                                            <input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>
-                                            Show GCode in GCode tab (memory intensive!)
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+        </div>
+    </div>
+
+    <div id="status">
+        <div class="container-fluid">
+            <ul class="metrics" id="metrics-list"></ul>
+        </div>
+    </div>
+
+    <div class="modal fade" id="preferences-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel"><i class="fa fa-cog"></i> Preferences</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">Printer Info</div>
+                        <div class="panel-body">
+                            <form role="form" class="form-horizontal">
+                                <div class="form-group">
+                                    <label for="filamentDia" class="col-sm-3 control-label">Plastic diameter:</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" value="1.75" id="filamentDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Plastic type:</label>
+                                    <div class="col-sm-9">
+                                        <div class="btn-group" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="radPlastic" id="plasticABS" value="ABS" onclick="GCODE.ui.processOptions()" checked> ABS
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="radPlastic" id="plasticPLA" value="PLA" onclick="GCODE.ui.processOptions()"> PLA
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nozzleDia" class="col-sm-3 control-label">Nozzle size:</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" value="0.4" id="nozzleDia" onchange="GCODE.ui.processOptions()" class="form-control" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">2D Render options</div>
+                        <div class="panel-body">
+                            <form role="form" class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Speed display type: </label>
+                                    <div class="col-sm-9">
+                                        <div class="btn-group" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="speedDisplay" id="speedDisplayRadio" value="1" onclick="GCODE.ui.processOptions()" checked> mm/sec
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="speedDisplay" id="exPerMMRadio" value="1" onclick="GCODE.ui.processOptions()"> mm extrusion per mm move
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="speedDisplay" id="volPerSecRadio" value="1" onclick="GCODE.ui.processOptions()"> mm^3/sec
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">What to display:</label>
+                                    <div class="col-sm-9">
+                                        <div class="checkbox">
+                                            <label for="showMovesCheckbox">
+                                                <input type="checkbox" id="showMovesCheckbox" value="1" onclick="GCODE.ui.processOptions()" checked>
+                                                Show non-extrusion moves
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="showRetractsCheckbox">
+                                                <input type="checkbox" id="showRetractsCheckbox" value="2" onclick="GCODE.ui.processOptions()" checked>
+                                                Show retracts and restarts
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="differentiateColorsCheckbox">
+                                                <input type="checkbox" id="differentiateColorsCheckbox" value="7" onclick="GCODE.ui.processOptions()" checked>
+                                                Show different speeds with different colors
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="showNextLayer">
+                                                <input type="checkbox" id="showNextLayer" value="9" onclick="GCODE.ui.processOptions()">
+                                                Show +1 layer
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Adjust display:</label>
+                                    <div class="col-sm-9">
+                                        <div class="checkbox">
+                                            <label for="moveModelCheckbox">
+                                                <input type="checkbox" id="moveModelCheckbox" value="3" onclick="GCODE.ui.processOptions()" checked>
+                                                Move model to the center of the grid
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="thickExtrusionCheckbox">
+                                                <input type="checkbox" id="thickExtrusionCheckbox" value="8" onclick="GCODE.ui.processOptions()">
+                                                Emulate extrusion width
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="alphaCheckbox">
+                                                <input type="checkbox" id="alphaCheckbox" value="10" onclick="GCODE.ui.processOptions()">
+                                                Render lines slightly transparent
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">GCode analyzer options</div>
+                        <div class="panel-body">
+                            <div class="alert alert-warning">
+                                <strong><i class="fa fa-warning"></i> Attention:</strong>
+                                Changing these settings requires re-analyzing your GCode file.
+                            </div>
+                            <form role="form" class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Enhanced options:</label>
+                                    <div class="col-sm-9">
+                                        <div class="checkbox">
+                                            <label for="sortLayersCheckbox">
+                                                <input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>
+                                                Sort layers by Z
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="purgeEmptyLayersCheckbox">
+                                                <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5" onclick="GCODE.ui.processOptions()" checked>
+                                                Hide empty layers
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label for="showGCodeCheckbox">
+                                                <input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>
+                                                Show GCode in GCode tab (memory intensive!)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="analysisModal" class="modal hide fade">
-    <div class="modal-header">
-        <h3>Running analysis....</h3>
-    </div>
-    <div class="modal-body">
-        <div class="progress" >
-            <div id="analysisProgress" class="bar" style="width: 0;"></div>
+    <div id="analysisModal" class="modal hide fade">
+        <div class="modal-header">
+            <h3>Running analysis....</h3>
+        </div>
+        <div class="modal-body">
+            <div class="progress">
+                <div id="analysisProgress" class="bar" style="width: 0;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn disabled">Please wait for process to get finished</a>
         </div>
     </div>
-    <div class="modal-footer">
-        <a href="#" class="btn disabled">Please wait for process to get finished</a>
-    </div>
-</div>
 
 
-<script>
-$(function() {
-    GCODE.ui.initHandlers();
-})
-</script>
+    <script>
+        $(function () {
+            GCODE.ui.initHandlers();
+        })
+    </script>
 
 </body>
 </html>

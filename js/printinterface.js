@@ -80,16 +80,10 @@ function initSettings() {
 
     }
 
-    //	var btn = document.createElement("button");
-    //	var t = document.createTextNode("Send Settings to Printer");
-    //	btn.onclick=function(){setSettings};
-    //	btn.appendChild(t);
-    //	newDiv.appendChild(btn);
+    var currentDiv = document.getElementById('settingsdiv');
+    currentDiv.appendChild(newDiv);
 
-    var currentDiv = document.getElementById('printsettings');
-    document.body.insertBefore(newDiv, currentDiv);
-
-    getSettings();
+    //getSettings();
 }
                       
 function sendEvent(evnt, value) {
