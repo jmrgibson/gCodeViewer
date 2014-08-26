@@ -11,24 +11,22 @@ var settings = {
 
 var events = { updateSettings: 'hi' }
 
-var debugEcho = false;
+var debugEcho = true;
 
 //doesn't work?
 //$('#cmdOut').change(function () {
 //    scrollTextArea();
 //});
 
-function scrollTextArea() {
-    $('#cmdOut').scrollTop($('#cmdOut')[0].scrollHeight);
-}
+
 
 function mapClick(){
-    alert (event.target.id);
+    sndJog(event.target.id);
 }
 function initMap() {
 
     //finds the position of the images used
-    var buttonSize = 75;    //in pixels
+    var buttonSize = 70;    //in pixels
     var mapimg = document.getElementById("imgjogmap");
     var xpos = mapimg.offsetLeft;
     var ypos = mapimg.offsetTop;
@@ -56,6 +54,7 @@ function initMap() {
     for (i = 0; i < mapbuttons.length; i++) {
         var area = document.createElement("AREA");
         area.alt = "Click to jog the printer";
+        area.title = mapbuttons[i].cmd;
         area.shape = "rect";
         area.onclick = mapClick;
         //needs seperated coords here otherwise adding strings and ints gets messy
@@ -99,15 +98,15 @@ function sendEvent(evnt, value) {
     xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             if (debugEcho) {
-                //				displayDebugEcho(xmlhttp.responseText);
-                incommingEvent(xmlhttp.responseText);
+                displayDebugEcho(xmlhttp.responseText);
+                //incommingEvent(xmlhttp.responseText);
             } else {
                 incommingEvent(xmlhttp.responseText);
             }
         }
     }
     if (debugEcho) {
-        xmlhttp.open("GET", "echoevent.php?evt=" + evnt + "&val=" + value, true);
+        //xmlhttp.open("GET", "echoevent.php?evt=" + evnt + "&val=" + value, true);
     } else {
         xmlhttp.open("GET", "forwardevent.php?evt=" + evnt + "&val=" + value, true);
     }
@@ -170,6 +169,9 @@ function getSettings() {
 }
 
 function sndJog(jogstr) {
+    if (document.getElementById("dwjcheck").checked) {
+        jogstr = jogstr + 'd';  //adds d to the end for drops while jogging
+    }
     sendEvent("jog", jogstr);
 }
 
@@ -183,5 +185,16 @@ function sndCmd(str) {
 
 }
 
+function scrollTextArea() {
+    $('#cmdOut').scrollTop($('#cmdOut')[0].scrollHeight);
+}
 
+function sendHome() {
+    sendEvent('homecycle','a')
+}
 
+function updatePWM() {
+    duty = document.getElementById('pwmDuty');
+    period = document.getElementById('pwmPeriod');
+    sendEvent('updatePWM', period.innerHTML+'_'+duty.innerHTML)
+}

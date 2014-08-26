@@ -52,23 +52,17 @@
             font-size: 14px;
         }
 
-        #textareabox {
-            width: 539px;
-            padding-left: 25px;
-            padding-right: 25px;
-            max-width: 539px;
+        #previewPane {
+            margin-left: 510px;
+            
         }
 
-        #lefthandcontrol {
-            float: left;
-            width: 540px;
-            padding: 5px 5px;
+        #settingsPane {
+            width: 500px;
         }
 
-        #righthandcontrol {
-            margin-left: 550px;
-
-
+        #controlPane {
+            width: 500px;
         }
         
         #settingsdiv {
@@ -81,175 +75,240 @@
         }
 
         #app {
-            position: relative;
+            /*position: relative;*/
+            top: 0px;
+            left: 550px;
+            border: 5px dashed grey;
+        }
+
+        .navbar-fixed-top {
+            left: 550px;
+            border-left: 5px dashed grey;
+        }
+
+        .mapcontrol {
+            position: fixed;
+            height: auto;
+            z-index: +1;
+        }
+
+        #homeButton {
+            top: 120px;
+            left: 70px;
+        }
+
+        #print-dialog-button, #print-help-button {
+            font-size: 20px;
+        }
+
+        #dropControl {
+            width: 100px;
+            top: 120px;
+            left: 400px;
+        }
+
+        #dropwhilejog {
+            left: 30px;
+            top: 450px;
+        }
+
+        #pwmInput {
+            left: 350px;
+            top: 450px;
+        }
+
+        #dropButton, #dropNumber, #homeButton{
+            width: 80px;
+            height: auto;
+
         }
 
 
     </style>
-
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="#">GCode Viewer</a>
+    <div id="controlPane">
+        <div class="navbar navbar-default">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav" id="control-tab">
+                    <li id="print-dialog-button"><a href="#" data-toggle="modal" data-target="#print-dialog"><i class="fa fa-cog controlText"></i> Print File...</a></li>
+                    <li id="print-help-button"><a href="#" data-toggle="modal" data-target="#help-dialog"><i class="fa fa-cog controlText"></i> Printer Help</a></li>
+                </ul>
             </div>
-
-            <ul class="nav navbar-nav" id="tab-nav">
-                <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
-                <!--<li class="clickOnResize"><a href="#tab3d" data-toggle="tab"><i class="fa fa-compass"></i> Manual Control</a></li>-->
-                <li><a href="#tabControl" data-toggle="tab"><i class="fa fa-arrows"></i> Printer Control</a></li>
-                <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D Preview</a></li>
-                <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode Viewer</a></li>
-                <!--<li class="gcode-init">
-                    <input type="file" id="file" name="files" style="display: none;" />
-                    <div class="gcode-drop" id="drop_zone">
-                        <i class="fa fa-upload"></i> Drag File here
-                    </div>
-                    <div class="gcode-progress">
-                        <div class="progress">
-                            <div id="loadProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
-                        </div>
-                        <div class="progress">
-                            <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
-                        </div>
-                    </div>
-                </li>-->
-            </ul>
-
-            <ul class="nav navbar-nav navbar-right">
-                <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preferences</a></li>
-            </ul>
+        </div>
+        <div id="dropControl" class="mapcontrol">
+            <input type="number" id="dropNumber" title="Enter a number of actuations" max="1000" min="0" placeholder="0" />
+            <br />
+            <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" />
+        </div>
+        <div id="pwmInput" class="mapcontrol" onblur="updatePWM()">
+            <input type="number" id="pwmDuty" title="On time of PWM in ms" min="0" /> Duty <br />
+            <input type="number" id="pwmPeriod" title="Period of PWM in ms" min="0" /> Period <br />
+        </div>
+        <div id="dropwhilejog" class="mapcontrol">
+            <input id="dwjcheck" type="checkbox" title="Check to actuate drops while jogging" /> Drop while jogging? <br />
+        </div>
+        <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
+        <map name="jogmap" id="jogmap">
+            <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
+        </map>
+        <img src="img/home-icon.png" class="mapcontrol" onclick="sendHome()" title="Click to home the x and y axis" id="homeButton">
+        <!--<img src="img/print-icon.png" class="mapicon" onclick="sendPrint()" title="Clink to start the print operation" id="printButton">-->
+        <div id="textareabox">
+            <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
+            <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
         </div>
     </div>
-
-
-    <div id="app">
-        <div id="control" style="display: none;">
-            <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
-            <div id="accordion2" class="panel-group">
-                <div class="panel panel-default hide" id="errAnalyseTab">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
-                                Error Analysis
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
-                        <div class="panel-body">
-                            <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()" />Run analysis</button>
-                            <div id="analysisOptionsDiv" class="hide">
-                                <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
+    <div id="previewPane">
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav" id="tab-nav">
+                    <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About Preview</a></li>
+                    <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D Preview</a></li>
+                    <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode Viewer</a></li>
+                    <!--<li class="gcode-init">
+                        <input type="file" id="file" name="files" style="display: none;" />
+                        <div class="gcode-drop" id="drop_zone">
+                            <i class="fa fa-upload"></i> Drag File here
+                        </div>
+                        <div class="gcode-progress">
+                            <div class="progress">
+                                <div id="loadProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
+                            </div>
+                            <div class="progress">
+                                <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </li>-->
+                </ul>
 
-
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#" data-toggle="modal" data-target="#preferences-modal"><i class="fa fa-cog"></i> Preview Preferences</a></li>
+                </ul>
             </div>
-            <output id="errorList"></output>
         </div>
-        <div id="gcode">
-            <div id="tabs-min" class="tabbable">
-                <div class="tab-content">
-                    <div class="tab-pane" id="tabControl">
-                        <div id="lefthandcontrol">
-                            <div id="mancontroldiv" onload="initSettings()">
-                                <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
-                                <map name="jogmap" id="jogmap">
-                                    <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
-                                </map>
-                                <div id="textareabox">
-                                    <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
-                                    <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
+
+
+        <div id="app">
+            <div id="control" style="display: none;">
+                <img src="img/logo.png" alt="gCodeViewer - an online gcode viewer" class="logo" />
+                <div id="accordion2" class="panel-group">
+                    <div class="panel panel-default hide" id="errAnalyseTab">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion2" href="#errorAnalysisAccordioinTab">
+                                    Error Analysis
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()" />Run analysis</button>
+                                <div id="analysisOptionsDiv" class="hide">
+                                    <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
                                 </div>
                             </div>
                         </div>
-                        <div id="righthandcontrol">
+                    </div>
 
-                            <div id="settingsdiv"></div>
-                            <ul>
-                                <li class="gcode-init">
-                                    <input type="file" id="file" name="files" style="display: none;" />
-                                    <div class="gcode-drop" id="drop_zone">
-                                        <i class="fa fa-upload"></i> Drag File here
+
+                </div>
+                <output id="errorList"></output>
+            </div>
+            <div id="gcode">
+                <div id="tabs-min" class="tabbable">
+                    <div class="tab-content">
+                        <div class="tab-pane" id="tabControl">
+                            <div id="lefthandcontrol">
+                                <div id="mancontroldiv" onload="initSettings()">
+ 
+                                </div>
+                            </div>
+                            <div id="righthandcontrol">
+
+                                <div id="settingsdiv"></div>
+                                <ul>
+                                    <li class="gcode-init">
+                                        <input type="file" id="file" name="files" style="display: none;" />
+                                        <div class="gcode-drop" id="drop_zone">
+                                            <i class="fa fa-upload"></i> Drag File here
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab2d">
+                            <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        Layer info
+                                        <span class="label label-primary">
+                                            <span class="curLayer">0</span> / <span class="maxLayer"></span>
+                                        </span>
                                     </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="tab2d">
-                        <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    Layer info
-                                    <span class="label label-primary">
-                                        <span class="curLayer">0</span> / <span class="maxLayer"></span>
-                                    </span>
-                                </div>
-                                <div class="panel-body">
-                                    <ul class="metrics"></ul>
-                                    <strong>Extrude speeds:</strong>
-                                    <div class="extrudeSpeeds"></div>
+                                    <div class="panel-body">
+                                        <ul class="metrics"></ul>
+                                        <strong>Extrude speeds:</strong>
+                                        <div class="extrudeSpeeds"></div>
 
-                                    <strong>Move speeds:</strong>
-                                    <div class="moveSpeeds"></div>
+                                        <strong>Move speeds:</strong>
+                                        <div class="moveSpeeds"></div>
 
-                                    <strong>Retract speeds:</strong>
-                                    <div class="retractSpeeds"></div>
+                                        <strong>Retract speeds:</strong>
+                                        <div class="retractSpeeds"></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="scrollbar">
-                            <div class="scrollbar-group">
-                                <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>
-                                <div class="scrollbar-control">
-                                    <input id="layer-scrollbar" value="" data-slider-id='layer-scrollbar' type="text" />
+                            <div class="scrollbar">
+                                <div class="scrollbar-group">
+                                    <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>
+                                    <div class="scrollbar-control">
+                                        <input id="layer-scrollbar" value="" data-slider-id='layer-scrollbar' type="text" />
+                                    </div>
+                                    <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>
                                 </div>
-                                <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>
                             </div>
-                        </div>
-                        <canvas id="canvas"></canvas>
-                    </div>
-
-                    <div class="tab-pane" id="tabGCode">
-                        <div id="gCodeContainer"></div>
-                    </div>
-                    <div class="tab-pane active" id="tabAbout">
-                        <div class="container">
-                            <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
-                            <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
-                            that allows you to manually control the printer, upload a file to print, change settings and preview the print job.
-                            It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
-                            Current features include:<br />
-                            <ul>
-                                <li>.DXF file processing</li>
-                                <ul>Upload files created in EagleCAD, CREO, Solidworks, Adobe Illustrator </ul>
-                                <li>
-                                    Visualize GCode in 2D, layer by layer
-                                    <ul>
-                                        <li>Show retracts and restarts</li>
-                                        <li>Show print/move/retract speeds</li>
-                                        <li>Display only part of layer, animate sequence of layer printing</li>
-                                        <li>Show two layers simultaneously so you can check overhangs</li>
-                                        <li>Adjust line width to simulate print more closely</li>
-                                        <li><b>Gcode viewer will try to parse nozzle and filament diameters from gcode, but it may fail to do so. In that case you will need to set it manually in 'Printer Info' tab</b></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    Analyze GCode
-                                    <ul>
-                                        <li>Print time, amount of plastic used, layer height, etc. for whole file and for single layer</li>
-                                        <li>Reference visualized part to GCode file (i.e. select a certain part of 2d visualization, switch to GCode view - it will highlight list of lines responsible for visualized piece)</li>
-                                    </ul>
-                                </li>
-                                <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
-                                <li>Only supports modern browsers</li>
-                                <li>Totally open source so you can use it as you like</li>
-                            </ul>
-                            <br /><br />
-                            All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
+                            <canvas id="canvas"></canvas>
                         </div>
 
+                        <div class="tab-pane" id="tabGCode">
+                            <div id="gCodeContainer"></div>
+                        </div>
+                        <div class="tab-pane active" id="tabAbout">
+                            <div class="container">
+                                <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
+                                <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
+                                that allows you to manually control the printer, upload a file to print, change settings and preview the print job.
+                                It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
+                                Current features include:<br />
+                                <ul>
+                                    <li>.DXF file processing</li>
+                                    <ul>Upload files created in EagleCAD, CREO, Solidworks, Adobe Illustrator </ul>
+                                    <li>
+                                        Visualize GCode in 2D, layer by layer
+                                        <ul>
+                                            <li>Show retracts and restarts</li>
+                                            <li>Show print/move/retract speeds</li>
+                                            <li>Display only part of layer, animate sequence of layer printing</li>
+                                            <li>Show two layers simultaneously so you can check overhangs</li>
+                                            <li>Adjust line width to simulate print more closely</li>
+                                            <li><b>Gcode viewer will try to parse nozzle and filament diameters from gcode, but it may fail to do so. In that case you will need to set it manually in 'Printer Info' tab</b></li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        Analyze GCode
+                                        <ul>
+                                            <li>Print time, amount of plastic used, layer height, etc. for whole file and for single layer</li>
+                                            <li>Reference visualized part to GCode file (i.e. select a certain part of 2d visualization, switch to GCode view - it will highlight list of lines responsible for visualized piece)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
+                                    <li>Only supports modern browsers</li>
+                                    <li>Totally open source so you can use it as you like</li>
+                                </ul>
+                                <br /><br />
+                                All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>

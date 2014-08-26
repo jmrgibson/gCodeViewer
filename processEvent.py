@@ -219,10 +219,13 @@ def postProcessGcode():
     oldgcode.close()
     newgcode.close()        
 
+def updatePWM(inputvals):
+    blah;
+
 
 events = {'jog': jog,             #xp1
           'printFile': 2,         #name
-          'solenoid': 3,        #solenoid_100_50 (period duty)
+          'updatePWM': updatePWM,        #solenoid_100_50 (period duty)
           'grblcmd': sendGcode,         #grbl_command^number
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
           'getSettings': getSettings}
