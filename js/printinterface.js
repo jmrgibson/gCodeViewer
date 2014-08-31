@@ -198,3 +198,7 @@ function updatePWM() {
     period = document.getElementById('pwmPeriod');
     sendEvent('updatePWM', period.innerHTML+'_'+duty.innerHTML)
 }
+
+function startPrint() {
+    //send print command to 
+}

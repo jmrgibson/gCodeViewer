@@ -58,16 +58,29 @@ def getSettings(val):
         
 
 def jog(jogcmd):
+    #comes in as Xp3d
     jogfactor = 10;
     if jogcmd[1] == 'p':
         sign = 1
     else:
         sign = -1        
     outputCmd = "G1 " + jogcmd[0] + str(int(jogcmd[2])*jogfactor*sign)
-
+    
+    dropWhileJog = False
+    if len(jogcmd) == 4:
+        if jogcmd[3] == 'd':
+            dropWhileJog = True
+            
+        
+    if dropWhileJog:
+        sendGcode("M4")
     sendGcode("G90")    #make sure to turn on-off rel positioning
     out = sendGcode(outputCmd)
     sendGcode("G91")
+    if dropWhileJog:
+        sendGcode("M3")
+        sendGcode("M5")
+
     return out
 
 def sendGcode(sendline):
@@ -221,6 +234,12 @@ def postProcessGcode():
 
 def updatePWM(inputvals):
     blah;
+    
+def printFile(inputVals):
+    readSettings()
+    #pycam call if dxf uploaded
+    postProcessGcode()
+    streamGcodeFile()
 
 
 events = {'jog': jog,             #xp1

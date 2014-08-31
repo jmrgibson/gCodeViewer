@@ -52,9 +52,13 @@
             font-size: 14px;
         }
 
+        #textareabox {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         #previewPane {
             margin-left: 510px;
-            
         }
 
         #settingsPane {
@@ -494,12 +498,56 @@
         </div>
     </div>
 
+    <div class="modal fade" id="print-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">GCode analyzer options</div>
+                    <div class="panel-body">
+                        <div class="alert alert-warning">
+                            <strong><i class="fa fa-warning"></i> Attention:</strong>
+                            Do not attempt to control the printer or change settings while a job is in progress!
+                        </div>
+                        <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">Enhanced options:</label>
+                                <div class="col-sm-9">
+                                    <div class="checkbox">
+                                        <label for="sortLayersCheckbox">
+                                            <input type="checkbox" id="sortLayersCheckbox" value="4" onclick="GCODE.ui.processOptions()" checked>
+                                            Sort layers by Z
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="purgeEmptyLayersCheckbox">
+                                            <input type="checkbox" id="purgeEmptyLayersCheckbox" value="5" onclick="GCODE.ui.processOptions()" checked>
+                                            Hide empty layers
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label for="showGCodeCheckbox">
+                                            <input type="checkbox" id="showGCodeCheckbox" value="6" onclick="GCODE.ui.processOptions()" checked>
+                                            Show GCode in GCode tab (memory intensive!)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="startPrint()">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        $(function () {
-            GCODE.ui.initHandlers();
-        })
-    </script>
+            <script>
+                $(function () {
+                    GCODE.ui.initHandlers();
+                })
+            </script>
 
 </body>
 </html>
