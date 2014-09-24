@@ -53,7 +53,7 @@
         }
 
         #textareabox {
-            margin-left: auto;
+            margin-left: 20px;
             margin-right: auto;
         }
 
@@ -96,9 +96,27 @@
             z-index: +1;
         }
 
+        .drop_zone{
+            border: 4px dashed #808080;
+            border-radius: 5px;
+            text-align: center;
+            width: 200px;
+            height: 75px;
+        }
+
         #homeButton {
-            top: 120px;
+            top: 430px;
             left: 70px;
+        }
+
+        #stopButton {
+            top: 150px;
+            left: 90px;
+        }
+
+        #printButton {
+            top: 70px;
+            left: 20px;
         }
 
         #print-dialog-button, #print-help-button {
@@ -112,16 +130,30 @@
         }
 
         #dropwhilejog {
-            left: 30px;
-            top: 450px;
+            left: 350px;
+            top: 200px;
         }
+
+        #jogControl {
+            position: fixed;
+            text-align: center;
+            left: 212px;
+            top: 285px;
+            width: 75px;
+            height: 75px;
+        }
+
+        #jogScale {
+            width: 65px;
+        }
+
 
         #pwmInput {
-            left: 350px;
-            top: 450px;
+            left: 320px;
+            top: 420px;
         }
 
-        #dropButton, #dropNumber, #homeButton{
+        #dropButton, #dropNumber, #homeButton, #stopButton, #printButton{
             width: 80px;
             height: auto;
 
@@ -133,7 +165,8 @@
         <div class="navbar navbar-default">
             <div class="container-fluid">
                 <ul class="nav navbar-nav" id="control-tab">
-                    <li id="print-dialog-button"><a href="#" data-toggle="modal" data-target="#print-dialog"><i class="fa fa-cog controlText"></i> Print File...</a></li>
+                    <li id="print-dialog-button"><a href="#" data-toggle="modal" data-target="#print-dialog"><i class="fa fa-cog controlText"></i> Upload File</a></li>
+                    <li id="print-help-button"><a href="#" data-toggle="modal" data-target="#help-dialog"><i class="fa fa-cog controlText"></i> Print Settings</a></li>
                     <li id="print-help-button"><a href="#" data-toggle="modal" data-target="#help-dialog"><i class="fa fa-cog controlText"></i> Printer Help</a></li>
                 </ul>
             </div>
@@ -143,19 +176,30 @@
             <br />
             <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" />
         </div>
-        <div id="pwmInput" class="mapcontrol" onblur="updatePWM()">
-            <input type="number" id="pwmDuty" title="On time of PWM in ms" min="0" /> Duty <br />
-            <input type="number" id="pwmPeriod" title="Period of PWM in ms" min="0" /> Period <br />
+        <div id="pwmInput" class="mapcontrol">
+            <select id="pwmMode" onchange="pwmDisplay()">
+                <option value="square">Square</option>
+                <option value="custom">Custom</option>
+                <option value="holdcustom">Hold+Custom</option>
+            </select> Mode <br />
+            <input type="number" id="pwmDuty" placeholder="On time of PWM in ms" min="0" /> Duty <br />
+            <input type="number" id="pwmPeriod" placeholder="Period of PWM in ms" min="0" /> Period <br />
+            <input type="number" id="pwmHold" placeholder="High hold of PWM in ms" min="0" disabled /> Hold <br />
+            <button type="button" onclick="updatePWM()">Update</button>
         </div>
         <div id="dropwhilejog" class="mapcontrol">
             <input id="dwjcheck" type="checkbox" title="Check to actuate drops while jogging" /> Drop while jogging? <br />
+        </div>
+        <div id="jogControl">
+            Scale <br /> (mm) <br /> <input type="number" id="jogScale" value="10" placeholder="Value in mm" min="0"/>
         </div>
         <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
         <map name="jogmap" id="jogmap">
             <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
         </map>
         <img src="img/home-icon.png" class="mapcontrol" onclick="sendHome()" title="Click to home the x and y axis" id="homeButton">
-        <!--<img src="img/print-icon.png" class="mapicon" onclick="sendPrint()" title="Clink to start the print operation" id="printButton">-->
+        <img src="img/stop.png" class="mapcontrol" onclick="sendStop()" title="Click to halt all commands" id="stopButton">
+        <img src="img/print2.png" class="mapcontrol" onclick="sendPrint()" title="Click to start the printing process" id="printButton">
         <div id="textareabox">
             <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
             <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
@@ -508,6 +552,8 @@
                             <strong><i class="fa fa-warning"></i> Attention:</strong>
                             Do not attempt to control the printer or change settings while a job is in progress!
                         </div>
+                        <input type="file" id="printfile" name="files" style="height: auto;"/>
+                        <div class="drop_zone"> Drop file here </div>
                         <form role="form" class="form-horizontal">
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">Enhanced options:</label>

@@ -8,7 +8,7 @@ Created on Thu Aug 14 21:41:51 2014
 import serial
 import re
 import time
-import sys
+import json
 import argparse
 # import threading
 import subprocess
@@ -232,19 +232,39 @@ def postProcessGcode():
     oldgcode.close()
     newgcode.close()        
 
-def updatePWM(inputvals):
-    blah;
+def updatePWM(inputVals):
+    mode = ' --mode='
+    period = ' --period='
+    duty = ' --duty='
+    hold = ' --hold='
+    
+    settings = json.loads(inputVals)
+    
+    mode += settings['mode']
+    period += settings['period']
+    duty += settings['period']
+    
+    outVals = mode + period + duty
+    
+    if settings['mode'] == 'holdcustom':
+        outVals += (hold + settings['hold'])
+    
+    subprocess.call('python microcmds.py ' + outVals)
+    
+def setDrops(inputVals):
+    subprocess.call('python microcmds.py --drops=' + inputVals)
     
 def printFile(inputVals):
     readSettings()
     #pycam call if dxf uploaded
-    postProcessGcode()
-    streamGcodeFile()
+    #postProcessGcode()
+    streamGcodeFile(inputVals)
 
 
 events = {'jog': jog,             #xp1
-          'printFile': 2,         #name
-          'updatePWM': updatePWM,        #solenoid_100_50 (period duty)
+          'printFile': printFile,         #name
+          'updatePWM': updatePWM,    #solenoid_100_50 (period duty)
+          'setDrops': setDrops,
           'grblcmd': sendGcode,         #grbl_command^number
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
           'getSettings': getSettings}

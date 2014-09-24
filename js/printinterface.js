@@ -30,8 +30,10 @@ function initMap() {
     var mapimg = document.getElementById("imgjogmap");
     var xpos = mapimg.offsetLeft;
     var ypos = mapimg.offsetTop;
-    var xcenter = xpos + mapimg.offsetWidth / 2 - buttonSize / 2;
-    var ycenter = ypos + mapimg.offsetHeight / 2 - buttonSize / 2;
+    //var xcenter = -xpos / 2 + mapimg.offsetWidth / 2 - buttonSize / 2;
+    //var ycenter = -ypos / 2 + mapimg.offsetHeight / 2 - buttonSize / 2;
+    var xcenter = mapimg.offsetWidth / 2 - buttonSize / 2;
+    var ycenter = mapimg.offsetHeight / 2 - buttonSize / 2;
 
     //loops through creating a number of map area objects corresponding to locations
     var mapbuttons = [];
@@ -194,9 +196,33 @@ function sendHome() {
 }
 
 function updatePWM() {
-    duty = document.getElementById('pwmDuty');
-    period = document.getElementById('pwmPeriod');
-    sendEvent('updatePWM', period.innerHTML+'_'+duty.innerHTML)
+    var imode = document.getElementById('pwmMode')
+    var iduty = document.getElementById('pwmDuty');
+    var iperiod = document.getElementById('pwmPeriod');
+    var ihold = document.getElementById('pwmHold');
+
+    var pwmSettings = {
+        mode:imode.value,
+        period:iperiod.value,
+        duty: iduty.value
+    };
+
+    if (imode == 'holdcustom') {
+        pwmSettings["hold"] = ihold.value;
+    }
+
+    sendEvent('updatePWM', JSON.stringify(pwmSettings));
+}
+
+function pwmDisplay() {
+    mode = document.getElementById('pwmMode');
+    hold = document.getElementById('pwmHold');
+    if (mode.value == 'holdcustom') { 
+        hold.disabled = false; 
+    } else {
+        hold.disabled = true;
+    }
+    
 }
 
 function startPrint() {
