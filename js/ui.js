@@ -538,7 +538,7 @@ GCODE.ui = (function(){
                 e.preventDefault();
                 console.log("Switching to 3d mode");
                 $(this).tab('show');
-                GCODE.renderer3d.doRender();
+                //GCODE.renderer3d.doRender();
             });
             $('#tab-nav').find('a[href="#tabGCode"]').click(function (e) {
                 e.preventDefault();

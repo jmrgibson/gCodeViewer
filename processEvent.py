@@ -8,7 +8,7 @@ Created on Thu Aug 14 21:41:51 2014
 import serial
 import re
 import time
-import sys
+import json
 import argparse
 # import threading
 import subprocess
@@ -58,16 +58,29 @@ def getSettings(val):
         
 
 def jog(jogcmd):
+    #comes in as Xp3d
     jogfactor = 10;
     if jogcmd[1] == 'p':
         sign = 1
     else:
         sign = -1        
     outputCmd = "G1 " + jogcmd[0] + str(int(jogcmd[2])*jogfactor*sign)
-
+    
+    dropWhileJog = False
+    if len(jogcmd) == 4:
+        if jogcmd[3] == 'd':
+            dropWhileJog = True
+            
+        
+    if dropWhileJog:
+        sendGcode("M4")
     sendGcode("G90")    #make sure to turn on-off rel positioning
     out = sendGcode(outputCmd)
     sendGcode("G91")
+    if dropWhileJog:
+        sendGcode("M3")
+        sendGcode("M5")
+
     return out
 
 def sendGcode(sendline):
@@ -219,10 +232,39 @@ def postProcessGcode():
     oldgcode.close()
     newgcode.close()        
 
+def updatePWM(inputVals):
+    mode = ' --mode='
+    period = ' --period='
+    duty = ' --duty='
+    hold = ' --hold='
+    
+    settings = json.loads(inputVals)
+    
+    mode += settings['mode']
+    period += settings['period']
+    duty += settings['period']
+    
+    outVals = mode + period + duty
+    
+    if settings['mode'] == 'holdcustom':
+        outVals += (hold + settings['hold'])
+    
+    subprocess.call('python microcmds.py ' + outVals)
+    
+def setDrops(inputVals):
+    subprocess.call('python microcmds.py --drops=' + inputVals)
+    
+def printFile(inputVals):
+    readSettings()
+    #pycam call if dxf uploaded
+    #postProcessGcode()
+    streamGcodeFile(inputVals)
+
 
 events = {'jog': jog,             #xp1
-          'printFile': 2,         #name
-          'solenoid': 3,        #solenoid_100_50 (period duty)
+          'printFile': printFile,         #name
+          'updatePWM': updatePWM,    #solenoid_100_50 (period duty)
+          'setDrops': setDrops,
           'grblcmd': sendGcode,         #grbl_command^number
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
           'getSettings': getSettings}
