@@ -17,6 +17,20 @@ import os
 
 settings = {}
 
+def pauseGrbl():
+    #get current state of spindle
+    sendGcode('M5')
+    sendGcode('!')
+    
+    
+def stopGrbl():
+    sendGcode('ctrl-x')
+    
+def resumeGrbl():
+    sendGcode('M3')
+    sendGcode('?')
+    
+
 def sendReply(evt, val):
     print (evt+":"+val)
     
@@ -144,26 +158,7 @@ def streamGcodeFile(inputFile):
     RX_BUFFER_SIZE = 128
     
      #check if gcode or dxf parsed in
-    if inputFile.lower().endswith(".dxf"):
-    
-        print "Processing .dxf file using PyCam..."
-    
-        pycamCall = ('python pycam --boundary-mode inside --export-gcode gcode.ngc '
-                    '--tool-shape cylindrical --tool-size {0} '
-                    '--process-path-strategy engrave --tool-feedrate {1} '
-                    '--tool-spindle-speed {2} --gcode-no-start-stop-spindle'
-                    '--process-overlap-percent 0 --process-milling-style ignore'
-                    '--safety-height 2 {3}').format(settings['traceWidth'], settings['feedRate'], settings['dropRate'], inputFile)
-    
-        subprocess.call(pycamCall, shell=True)
-        
-        print "postprocessing gcode"
-        #call postprocessor!
-        
-    
-    
-    if settings['usePostProcessor']:
-        postProcessGcode()
+
             
                 
     # Initialize
@@ -193,6 +188,8 @@ def streamGcodeFile(inputFile):
         grbl_out = '' 
         while sum(c_line) >= RX_BUFFER_SIZE-1 | s.inWaiting() :
             out_temp = s.readline().strip() # Wait for grbl response
+            if out_temp.find('Grbl'):
+                return 'Gcode streaming interrupted'
             if out_temp.find('ok') < 0 and out_temp.find('error') < 0 :
                 #print "  Debug: ",out_temp # Debug response
                 notused = 'hi'
@@ -286,6 +283,10 @@ def printFile(inputVals):
     
 def test(inval):
     print 'test ok: ' + inval
+    
+def grblHome(blah):
+    sendGcode('$H')
+    return sendGcode('G10')
 
 
 events = {'jog': jog,             #xp1
@@ -296,6 +297,7 @@ events = {'jog': jog,             #xp1
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
           'getSettings': getSettings,
           'updateWaveform': updateWaveform,
+          'homecycle': grblHome,
           'test': test}
           
 
