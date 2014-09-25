@@ -36,7 +36,7 @@ def writeSettings():
         f.write(setting + " = " + settings[setting] + '\n')
     
 def setSettings(settingsIn):
-    
+    settings = json.loads(settingsIn)
     pairs = settingsIn.split("_");
     for pair in pairs:
         nameval = pair.split("-")
@@ -59,24 +59,32 @@ def getSettings(val):
 
 def jog(jogcmd):
     #comes in as Xp3d
-    jogfactor = 10;
+    jogstep = jogcmd[2]            
+    
+    jogsteps = {'3': 10,
+                '2': 10,
+                '1': 0.1
+                }            
+          
     if jogcmd[1] == 'p':
-        sign = 1
+        sign = ' '
     else:
-        sign = -1        
-    outputCmd = "G1 " + jogcmd[0] + str(int(jogcmd[2])*jogfactor*sign)
+        sign = '-'   
+        
+    outputCmd = "G1 " + jogcmd[0] + sign + str(jogsteps[jogstep])
     
     dropWhileJog = False
     if len(jogcmd) == 4:
         if jogcmd[3] == 'd':
             dropWhileJog = True
-            
+    
+  
         
     if dropWhileJog:
         sendGcode("M4")
-    sendGcode("G90")    #make sure to turn on-off rel positioning
+    sendGcode("G91")    #make sure to turn on-off rel positioning
     out = sendGcode(outputCmd)
-    sendGcode("G91")
+    sendGcode("G90")
     if dropWhileJog:
         sendGcode("M3")
         sendGcode("M5")
@@ -84,27 +92,40 @@ def jog(jogcmd):
     return out
 
 def sendGcode(sendline):
-    requestSerial()
+    #return "sent Gcode" #got here
+    #sendline = json.loads(sendline)
+    #return 'line: ' + sendline    #got here
+    #return 'I am: ' + subprocess.call('whoammi')
     
-    s = serial.Serial("/dev/ttyAMA0",9600)
-    s.write(sendline + '\n')
-    reply = s.readline()
+    #requestSerial()
+    try:
     
-    s.close()
-    releaseSerial()
-    return reply
-
-
-
+        s = serial.Serial("/dev/ttyAMA0", 9600, timeout=2)
+        sendline = sendline.strip()
+        
+        s.flushOutput()
+        s.flushInput()
+        
+        s.write(sendline + '\n')
+        return s.readline()
+    except:
+        return 'Error encountered!'
     
+    finally:
+        s.close()
+        #releaseSerial()        
+
+    #s.write(sendline + '\n')
+    
+    return 'done'
 
 def releaseSerial():
-    os.remove("SERIALINUSE")
+    os.remove("SERIALINUSE.txt")
 
 def requestSerial():    
-    while (os.path.isfile("SERIALINUSE")):
+    while (os.path.isfile("SERIALINUSE.txt")):
         continue
-    serialSemaphore = open("SERIALINUSE", 'w')
+    serialSemaphore = open("SERIALINUSE.txt", 'w+')
     serialSemaphore.close()
     
 
@@ -114,9 +135,10 @@ This script parses the config file, postprocesses the gcode, and then streams it
 
 
 def streamGcodeFile(inputFile):
+    replyack = ''
     
-    readSettings()
-    subprocess.call(['python', 'updatePwm.py', settings['dropperiod'], settings['dropduty']])
+    #readSettings()
+    #subprocess.call(['python', 'updatePwm.py', settings['dropperiod'], settings['dropduty']])
 
     
     RX_BUFFER_SIZE = 128
@@ -144,16 +166,13 @@ def streamGcodeFile(inputFile):
         postProcessGcode()
             
                 
-        
-    
     # Initialize
-    s = serial.Serial("/dev/ttyAMA0",9600)
-    f = args.gcode_file
-    verbose = True
-    if args.quiet : verbose = False
+    s = serial.Serial("/dev/ttyAMA0", 9600, timeout=2)
+    f = inputFile
+    verbose = False
         
     # Wake up grbl
-    print "Initializing grbl..."
+    #print "Initializing grbl..."
     s.write("\r\n\r\n")
     
     # Wait for grbl to initialize and flush startup text in serial input
@@ -161,7 +180,7 @@ def streamGcodeFile(inputFile):
     s.flushInput()
     
     # Stream g-code to grbl
-    print "Streaming gcode.ngc to ", args.device_file
+    #was a print here
     l_count = 0
     g_count = 0
     c_line = []
@@ -175,7 +194,8 @@ def streamGcodeFile(inputFile):
         while sum(c_line) >= RX_BUFFER_SIZE-1 | s.inWaiting() :
             out_temp = s.readline().strip() # Wait for grbl response
             if out_temp.find('ok') < 0 and out_temp.find('error') < 0 :
-                print "  Debug: ",out_temp # Debug response
+                #print "  Debug: ",out_temp # Debug response
+                notused = 'hi'
             else :
                 grbl_out += out_temp;
                 g_count += 1 # Iterate g-code counter
@@ -186,7 +206,7 @@ def streamGcodeFile(inputFile):
         if verbose : print "BUF:",str(sum(c_line)),"REC:",grbl_out
     
     # Wait for user input after streaming is completed
-    print "G-code streaming finished! Printer will continue operations until finished\n"
+    return "G-code streaming finished! Printer will continue operations until finished"
     #print "WARNING: Wait until grbl completes buffered g-code blocks before exiting."
     #raw_input("  Press <Enter> to exit and disable grbl.")  
     
@@ -253,21 +273,30 @@ def updatePWM(inputVals):
     
 def setDrops(inputVals):
     subprocess.call('python microcmds.py --drops=' + inputVals)
+    return str(inputVals) + ' drops set'
+    
+def updateWaveform(inputVals):
+    subprocess.call('python microcmds.py --setSteps=' + inputVals)
     
 def printFile(inputVals):
-    readSettings()
+    #readSettings()
     #pycam call if dxf uploaded
     #postProcessGcode()
     streamGcodeFile(inputVals)
+    
+def test(inval):
+    print 'test ok: ' + inval
 
 
 events = {'jog': jog,             #xp1
           'printFile': printFile,         #name
           'updatePWM': updatePWM,    #solenoid_100_50 (period duty)
           'setDrops': setDrops,
-          'grblcmd': sendGcode,         #grbl_command^number
+          'sendGcode': sendGcode,         #grbl_command^number
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
-          'getSettings': getSettings}
+          'getSettings': getSettings,
+          'updateWaveform': updateWaveform,
+          'test': test}
           
 
 # Define command line argument interface
@@ -281,6 +310,9 @@ args = parser.parse_args()
 #print args.evt + args.val
 #events come in as arg1 = event arg2 = variables
 
-events[args.evt](args.val)
+#print args.evt
+#print args.val
+
+print events[args.evt](args.val).strip()
     
     

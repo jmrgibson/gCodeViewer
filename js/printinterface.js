@@ -11,13 +11,6 @@ var settings = {
 
 var events = { updateSettings: 'hi' }
 
-var debugEcho = true;
-
-//doesn't work?
-//$('#cmdOut').change(function () {
-//    scrollTextArea();
-//});
-
 
 
 function mapClick(){
@@ -89,6 +82,8 @@ function initSettings() {
                       
 function sendEvent(evnt, value) {
 
+    var debugEcho = false;
+
 
     var xmlhttp;
     if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -99,11 +94,13 @@ function sendEvent(evnt, value) {
 
     xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            //alert('msg rsg!');
             if (debugEcho) {
                 displayDebugEcho(xmlhttp.responseText);
                 //incommingEvent(xmlhttp.responseText);
             } else {
-                incommingEvent(xmlhttp.responseText);
+                //incommingEvent(xmlhttp.responseText);
+                displayDebugEcho(xmlhttp.responseText);
             }
         }
     }
@@ -111,6 +108,7 @@ function sendEvent(evnt, value) {
         //xmlhttp.open("GET", "echoevent.php?evt=" + evnt + "&val=" + value, true);
     } else {
         xmlhttp.open("GET", "forwardevent.php?evt=" + evnt + "&val=" + value, true);
+        //xmlhttp.open("GET", "forwardevent.php?evt=hi&val=test", true);
     }
     xmlhttp.send();
 }
@@ -179,10 +177,10 @@ function sndJog(jogstr) {
 
 function sndCmd(str) {
     if (str.length != 0) {
-        str = str.replace('\n','');
-        incommingEvent('message:Sending "' + str +'"');
-        document.getElementById("cmdIn").value = "";
-        //sendEvent('grblcmd', str);
+        sendEvent('sendGcode', str);    //send command
+        str = str.replace('\n','');                     //remove newlines
+        incommingEvent('Sent: ' + str); //echo message
+        document.getElementById("cmdIn").value = "";    //clear input line
     }
 
 }

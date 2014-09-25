@@ -44,19 +44,6 @@
 </head>
 <body>
     <style>
-        textarea {
-            resize: none;
-            background-color: rgb(240, 240, 240);
-            color: rgb(20,20,20);
-            font-family: "Courier New";
-            font-size: 14px;
-        }
-
-        #textareabox {
-            margin-left: 20px;
-            margin-right: auto;
-        }
-
         #previewPane {
             margin-left: 510px;
         }
@@ -91,7 +78,7 @@
         }
 
         .mapcontrol {
-            position: fixed;
+            position: absolute;
             height: auto;
             z-index: +1;
         }
@@ -104,41 +91,35 @@
             height: 75px;
         }
 
-        #homeButton {
-            top: 430px;
-            left: 70px;
-        }
-
-        #stopButton {
-            top: 150px;
-            left: 90px;
-        }
-
-        #printButton {
-            top: 70px;
-            left: 20px;
-        }
-
         #print-dialog-button, #print-help-button {
             font-size: 20px;
         }
 
+        #buttonPanel {
+            position: relative;
+        }
+
+        #imgjogmap {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+        }
+
         #dropControl {
             width: 100px;
-            top: 120px;
+            top: 70px;
             left: 400px;
         }
 
         #dropwhilejog {
             left: 350px;
-            top: 200px;
+            top: 150px;
         }
 
         #jogControl {
-            position: fixed;
             text-align: center;
             left: 212px;
-            top: 285px;
+            top: 210px;
             width: 75px;
             height: 75px;
         }
@@ -147,16 +128,45 @@
             width: 65px;
         }
 
-
         #pwmInput {
             left: 320px;
-            top: 420px;
+            top: 320px;
+            width: 200px;
         }
 
         #dropButton, #dropNumber, #homeButton, #stopButton, #printButton{
             width: 80px;
             height: auto;
 
+        }
+         #homeButton {
+            top: 370px;
+            left: 70px;
+        }
+
+        #stopButton {
+            top: 100px;
+            left: 90px;
+        }
+
+        #printButton {
+            top: 20px;
+            left: 20px;
+        }
+
+        textarea {
+            resize: none;
+            background-color: rgb(240, 240, 240);
+            color: rgb(20,20,20);
+            font-family: "Courier New";
+            font-size: 14px;
+        }
+
+        #textareabox {
+            position: static;
+            top: 600px;
+            margin-left: 20px;
+            margin-right: auto;
         }
 
 
@@ -171,35 +181,38 @@
                 </ul>
             </div>
         </div>
-        <div id="dropControl" class="mapcontrol">
-            <input type="number" id="dropNumber" title="Enter a number of actuations" max="1000" min="0" placeholder="0" />
-            <br />
-            <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" />
+        <div id="buttonPanel">
+            <div id="dropControl" class="mapcontrol">
+                <input type="number" id="dropNumber" title="Enter a number of actuations" max="1000" min="0" placeholder="0" />
+                <br />
+                <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" />
+            </div>
+            <div id="pwmInput" class="mapcontrol">
+                <select id="pwmMode" onchange="pwmDisplay()">
+                    <option value="square">Square</option>
+                    <option value="custom">Custom</option>
+                    <option value="holdcustom">Hold+Custom</option>
+                </select> Mode <br />
+                <input type="number" id="pwmDuty" placeholder="On time of PWM in ms" min="0" /> Duty <br />
+                <input type="number" id="pwmPeriod" placeholder="Period of PWM in ms" min="0" /> Period <br />
+                <input type="number" id="pwmHold" placeholder="High hold of PWM in ms" min="0" disabled /> Hold <br />
+                <button type="button" onclick="updatePWM()">Update</button>
+            </div>
+            <div id="dropwhilejog" class="mapcontrol">
+                <input id="dwjcheck" type="checkbox" title="Check to actuate drops while jogging" /> Drop while jogging? <br />
+            </div>
+            <div id="jogControl"  class="mapcontrol">
+                Scale <br /> (mm) <br /> <input type="number" id="jogScale" value="10" placeholder="Value in mm" min="0"/>
+            </div>
+            <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap"/>
+            <map name="jogmap" id="jogmap">
+                <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
+            </map>
+            <img src="img/home-icon.png" class="mapcontrol" onclick="sendHome()" title="Click to home the x and y axis" id="homeButton"/>
+            <img src="img/stop.png" class="mapcontrol" onclick="sendStop()" title="Click to halt all commands" id="stopButton"/>
+            <img src="img/print2.png" class="mapcontrol" onclick="sendPrint()" title="Click to start the printing process" id="printButton"/>
         </div>
-        <div id="pwmInput" class="mapcontrol">
-            <select id="pwmMode" onchange="pwmDisplay()">
-                <option value="square">Square</option>
-                <option value="custom">Custom</option>
-                <option value="holdcustom">Hold+Custom</option>
-            </select> Mode <br />
-            <input type="number" id="pwmDuty" placeholder="On time of PWM in ms" min="0" /> Duty <br />
-            <input type="number" id="pwmPeriod" placeholder="Period of PWM in ms" min="0" /> Period <br />
-            <input type="number" id="pwmHold" placeholder="High hold of PWM in ms" min="0" disabled /> Hold <br />
-            <button type="button" onclick="updatePWM()">Update</button>
-        </div>
-        <div id="dropwhilejog" class="mapcontrol">
-            <input id="dwjcheck" type="checkbox" title="Check to actuate drops while jogging" /> Drop while jogging? <br />
-        </div>
-        <div id="jogControl">
-            Scale <br /> (mm) <br /> <input type="number" id="jogScale" value="10" placeholder="Value in mm" min="0"/>
-        </div>
-        <img src="img/jogarrows.png" usemap="#jogmap" onload="initMap()" id="imgjogmap">
-        <map name="jogmap" id="jogmap">
-            <!--<area shape="rect" coords="198,272,248,322" onclick="sndJog('Xp1')" alt="Click to send a jog command" name="Xp1" value="a">FILLED IN BY initMap-->
-        </map>
-        <img src="img/home-icon.png" class="mapcontrol" onclick="sendHome()" title="Click to home the x and y axis" id="homeButton">
-        <img src="img/stop.png" class="mapcontrol" onclick="sendStop()" title="Click to halt all commands" id="stopButton">
-        <img src="img/print2.png" class="mapcontrol" onclick="sendPrint()" title="Click to start the printing process" id="printButton">
+
         <div id="textareabox">
             <textarea id="cmdIn" rows="1" cols="60" placeholder="Enter Gcode here and press 'Enter' to Send..." onkeyup="if (event.keyCode==13) {sndCmd(this.value)}"></textarea>
             <textarea readonly id="cmdOut" rows="10" cols="60" onchange="scrollTextArea()"></textarea>
