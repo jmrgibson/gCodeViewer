@@ -242,3 +242,7 @@ function pwmDisplay() {
 function startPrint() {
     //send print command to 
 }
+
+function pauseGrbl() {
+
+}
