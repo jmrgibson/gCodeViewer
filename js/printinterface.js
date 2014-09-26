@@ -11,7 +11,16 @@ var settings = {
 
 var events = { updateSettings: 'hi' }
 
+function shellstringify(input) {
+    strout = '';
+    for (key in input) {
+        strout += (key + '-' + input[key] + '_');
+    }
 
+    //remove last _
+    strout = strout.slice(0, strout.length-1);
+    return strout;
+}
 
 function mapClick(){
     sndJog(event.target.id);
@@ -35,9 +44,9 @@ function initMap() {
     for (i = 0; i < buttonpositions.length; i++) {
         var dir;
         if (buttonpositions[i] > 0) {
-            dir = '+';
+            dir = 'p';
         } else {
-            dir = '-';
+            dir = 'n';
         }
         var button1 = { x: buttonpositions[i], y: 0, cmd: 'X' + dir + Math.abs(buttonpositions[i]) };
         var button2 = { x: 0, y: -1 * buttonpositions[i], cmd: 'Y' + dir + Math.abs(buttonpositions[i]) };
@@ -114,7 +123,7 @@ function sendEvent(evnt, value) {
 }
 
 function displayDebugEcho(response) {
-    document.getElementById("cmdOut").innerHTML += response + "\n";
+    document.getElementById("cmdOut").innerHTML += response.replace(/(\r\n|\n|\r)/gm,"") + "\n";
 }
 
 function incommingEvent(response) {
@@ -172,7 +181,13 @@ function sndJog(jogstr) {
     if (document.getElementById("dwjcheck").checked) {
         jogstr = jogstr + 'd';  //adds d to the end for drops while jogging
     }
+    displayDebugEcho(jogstr);
     sendEvent("jog", jogstr);
+}
+
+function setDrops() {
+    b = document.getElementById("dropButton");
+    sendEvent('setDrops', b)
 }
 
 function sndCmd(str) {
@@ -209,7 +224,8 @@ function updatePWM() {
         pwmSettings["hold"] = ihold.value;
     }
 
-    sendEvent('updatePWM', JSON.stringify(pwmSettings));
+    //displayDebugEcho(shellstringify(pwmSettings));
+    sendEvent('updatePWM', shellstringify(pwmSettings));
 }
 
 function pwmDisplay() {

@@ -185,7 +185,7 @@
             <div id="dropControl" class="mapcontrol">
                 <input type="number" id="dropNumber" title="Enter a number of actuations" max="1000" min="0" placeholder="0" />
                 <br />
-                <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" />
+                <input type="image" id="dropButton" src="img/drop-button.png" title="Click to send the drop command" onclick="setDrops()" />
             </div>
             <div id="pwmInput" class="mapcontrol">
                 <select id="pwmMode" onchange="pwmDisplay()">

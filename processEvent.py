@@ -17,6 +17,15 @@ import os
 
 settings = {}
 
+def shellunstringify(strIn):
+    output = {};
+    pairs = strIn.split("_");
+    for pair in pairs:
+        nameval = pair.split("-")
+        output[nameval[0]] = nameval[1]
+    
+    return output
+
 def sendReply(evt, val):
     print (evt+":"+val)
     
@@ -36,7 +45,7 @@ def writeSettings():
         f.write(setting + " = " + settings[setting] + '\n')
     
 def setSettings(settingsIn):
-    settings = json.loads(settingsIn)
+    #settings = json.loads(settingsIn)
     pairs = settingsIn.split("_");
     for pair in pairs:
         nameval = pair.split("-")
@@ -62,7 +71,7 @@ def jog(jogcmd):
     jogstep = jogcmd[2]            
     
     jogsteps = {'3': 10,
-                '2': 10,
+                '2': 1,
                 '1': 0.1
                 }            
           
@@ -75,10 +84,10 @@ def jog(jogcmd):
     
     dropWhileJog = False
     if len(jogcmd) == 4:
-        if jogcmd[3] == 'd':
+        if jogcmd[-1] == 'd':
             dropWhileJog = True
     
-  
+    #return 'gotjog: ' + outputCmd + str(dropWhileJog) #works fine
         
     if dropWhileJog:
         sendGcode("M4")
@@ -253,27 +262,31 @@ def postProcessGcode():
     newgcode.close()        
 
 def updatePWM(inputVals):
+    #return 'pwmupdated'
     mode = ' --mode='
     period = ' --period='
     duty = ' --duty='
     hold = ' --hold='
     
-    settings = json.loads(inputVals)
-    
+    settings = shellunstringify(inputVals)
+        
     mode += settings['mode']
     period += settings['period']
-    duty += settings['period']
+    duty += settings['duty']
     
     outVals = mode + period + duty
     
     if settings['mode'] == 'holdcustom':
         outVals += (hold + settings['hold'])
     
+    return 'python microcmds.py ' + outVals
     subprocess.call('python microcmds.py ' + outVals)
+    return 'Settings Updated.'
     
 def setDrops(inputVals):
+    return str(inputVals) + ' drops set'    
     subprocess.call('python microcmds.py --drops=' + inputVals)
-    return str(inputVals) + ' drops set'
+
     
 def updateWaveform(inputVals):
     subprocess.call('python microcmds.py --setSteps=' + inputVals)
@@ -307,7 +320,6 @@ parser.add_argument('val',
                     help='value of stuff')
 args = parser.parse_args()
 
-#print args.evt + args.val
 #events come in as arg1 = event arg2 = variables
 
 #print args.evt
