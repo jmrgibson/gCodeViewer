@@ -160,16 +160,7 @@ function updateSettings(inputSettings) {
 }
 
 function setSettings() {
-    //build output string name-val_name2-val2 etc etc
-    var strout = "";
-    for (setting in settings) {
-        settings[setting] = vsettings[setting].value;
-        strout = strout + setting + "-" + settings[setting] + "_";
-    }
-    //remove last _
-    strout = strout.slice(0, -1);
-
-    sendEvent("setSettings", strout);
+    sendEvent("setSettings", shellstringify(settings));
 
 }
 
@@ -181,13 +172,13 @@ function sndJog(jogstr) {
     if (document.getElementById("dwjcheck").checked) {
         jogstr = jogstr + 'd';  //adds d to the end for drops while jogging
     }
-    displayDebugEcho(jogstr);
+    //displayDebugEcho(jogstr);
     sendEvent("jog", jogstr);
 }
 
 function setDrops() {
-    b = document.getElementById("dropButton");
-    sendEvent('setDrops', b)
+    b = document.getElementById("dropNumber");
+    sendEvent('setDrops', b.value)
 }
 
 function sndCmd(str) {
@@ -243,6 +234,10 @@ function startPrint() {
     //send print command to 
 }
 
-function pauseGrbl() {
+function sendPause() {
+    sendEvent('pauseGrbl', 'a');
+}
 
+function sendStop() {
+    sendEvent('stopGrbl', 'a');
 }

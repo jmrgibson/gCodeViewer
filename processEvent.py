@@ -8,7 +8,6 @@ Created on Thu Aug 14 21:41:51 2014
 import serial
 import re
 import time
-import json
 import argparse
 # import threading
 import subprocess
@@ -279,36 +278,53 @@ def updatePWM(inputVals):
     if settings['mode'] == 'holdcustom':
         outVals += (hold + settings['hold'])
     
-    return 'python microcmds.py ' + outVals
-    subprocess.call('python microcmds.py ' + outVals)
+    #return 'python microcmds.py ' + outVals
+    subprocess.call('python microcmds.py ' + outVals, shell = True)
     return 'Settings Updated.'
     
 def setDrops(inputVals):
+    outcmd = 'python microcmds.py --drops=' + inputVals
+    #return outcmd
+    subprocess.call(outcmd, shell = True)
     return str(inputVals) + ' drops set'    
-    subprocess.call('python microcmds.py --drops=' + inputVals)
+    
 
     
 def updateWaveform(inputVals):
-    subprocess.call('python microcmds.py --setSteps=' + inputVals)
+    subprocess.call('python microcmds.py --setSteps=' + inputVals, shell = True)
     
-def printFile(inputVals):
+def startGrbl(inputVals):
     #readSettings()
     #pycam call if dxf uploaded
     #postProcessGcode()
     streamGcodeFile(inputVals)
+    
+def pauseGrbl(a):
+    #get and save current spindle state?
+    sendGcode('!') #feed hold command
+    
+def resumeGrbl(a):
+    #write previous spindle state
+    sendGcode('~')
+
+def stopGrbl(a):
+    sendGcode('^x')
     
 def test(inval):
     print 'test ok: ' + inval
 
 
 events = {'jog': jog,             #xp1
-          'printFile': printFile,         #name
+          'startGrbl': startGrbl,         #name
           'updatePWM': updatePWM,    #solenoid_100_50 (period duty)
           'setDrops': setDrops,
           'sendGcode': sendGcode,         #grbl_command^number
           'setSettings': setSettings,     #setsettings_feedrate-blah_droprate-blah
           'getSettings': getSettings,
           'updateWaveform': updateWaveform,
+          'pauseGrbl': pauseGrbl,
+          'stopGrbl': stopGrbl,
+          'resumeGrbl': resumeGrbl,
           'test': test}
           
 
