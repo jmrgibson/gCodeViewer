@@ -147,8 +147,6 @@ def streamGcodeFile(inputFile):
     
     #readSettings()
     #subprocess.call(['python', 'updatePwm.py', settings['dropperiod'], settings['dropduty']])
-
-    
     RX_BUFFER_SIZE = 128
     
      #check if gcode or dxf parsed in
@@ -170,13 +168,13 @@ def streamGcodeFile(inputFile):
         
     
     
-    if settings['usePostProcessor']:
-        postProcessGcode()
+    #if settings['usePostProcessor']:
+    #    postProcessGcode()
             
                 
     # Initialize
     s = serial.Serial("/dev/ttyAMA0", 9600, timeout=2)
-    f = inputFile
+    f = open(inputFile, 'r')
     verbose = False
         
     # Wake up grbl
@@ -214,13 +212,15 @@ def streamGcodeFile(inputFile):
         if verbose : print "BUF:",str(sum(c_line)),"REC:",grbl_out
     
     # Wait for user input after streaming is completed
-    return "G-code streaming finished! Printer will continue operations until finished"
+    
     #print "WARNING: Wait until grbl completes buffered g-code blocks before exiting."
     #raw_input("  Press <Enter> to exit and disable grbl.")  
     
     # Close file and serial port
     f.close()
     s.close()
+    
+    return "G-code streaming finished! Printer will continue operations until finished"
 
 def postProcessGcode():
     
@@ -297,7 +297,7 @@ def startGrbl(inputVals):
     #readSettings()
     #pycam call if dxf uploaded
     #postProcessGcode()
-    streamGcodeFile(inputVals)
+    return streamGcodeFile(inputVals)
     
 def pauseGrbl(a):
     #get and save current spindle state?
