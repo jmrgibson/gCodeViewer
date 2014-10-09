@@ -41,6 +41,11 @@ function shellstringify(input) {
     return strout;
 }
 
+function spacetounderscore(input) {
+    return input.replace(/\s/g, '_');
+
+}
+
 function mapClick(){
     sndJog(event.target.id);
 }
@@ -142,7 +147,7 @@ function sendEvent(evnt, value) {
 }
 
 function displayDebugEcho(response) {
-    document.getElementById("cmdOut").innerHTML += response.replace(/(\r\n|\n|\r)/gm,"") + "\n";
+    document.getElementById("cmdOut").innerHTML = response.replace(/(\r\n|\n|\r)/gm,"") + "\n" + document.getElementById("cmdOut").innerHTML;
 }
 
 function incommingEvent(response) {
@@ -202,9 +207,10 @@ function setDrops() {
 
 function sndCmd(str) {
     if (str.length != 0) {
+        str = spacetounderscore(str);
         sendEvent('sendGcode', str);    //send command
         str = str.replace('\n','');                     //remove newlines
-        incommingEvent('Sent: ' + str); //echo message
+        //displayDebugEcho('Sent: ' + str); //echo message
         document.getElementById("cmdIn").value = "";    //clear input line
     }
 

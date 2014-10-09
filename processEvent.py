@@ -104,6 +104,10 @@ def sendGcode(sendline):
     #sendline = json.loads(sendline)
     #return 'line: ' + sendline    #got here
     #return 'I am: ' + subprocess.call('whoammi')
+
+    
+    sendline = sendline.replace('_', ' ')
+#    return sendline
     
     #requestSerial()
     try:
