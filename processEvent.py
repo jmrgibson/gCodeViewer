@@ -87,15 +87,17 @@ def jog(jogcmd):
             dropWhileJog = True
     
     #return 'gotjog: ' + outputCmd + str(dropWhileJog) #works fine
-        
+    
+
+    sendGcode("G91")    #make sure to turn on-off rel positioning    
     if dropWhileJog:
-        sendGcode("M4")
-    sendGcode("G91")    #make sure to turn on-off rel positioning
+        sendGcode("M4")    
     out = sendGcode(outputCmd)
-    sendGcode("G90")
     if dropWhileJog:
         sendGcode("M3")
         sendGcode("M5")
+        
+    sendGcode("G90")
 
     return out
 
@@ -184,11 +186,13 @@ def streamGcodeFile(inputFile):
     # Wake up grbl
     #print "Initializing grbl..."
     s.write("\r\n\r\n")
+
     
     # Wait for grbl to initialize and flush startup text in serial input
     time.sleep(2)
     s.flushInput()
-    
+    s.write("G92 X0 Y0 Z0\n")
+    #s.readline().strip()
     # Stream g-code to grbl
     #was a print here
     l_count = 0
