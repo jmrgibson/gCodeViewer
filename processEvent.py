@@ -176,6 +176,8 @@ def streamGcodeFile(inputFile):
     
     #if settings['usePostProcessor']:
     #    postProcessGcode()
+    
+    sendGcode('G92_X0_Y0_Z0')
             
                 
     # Initialize
@@ -191,7 +193,9 @@ def streamGcodeFile(inputFile):
     # Wait for grbl to initialize and flush startup text in serial input
     time.sleep(2)
     s.flushInput()
-    s.write("G92 X0 Y0 Z0\n")
+    
+    
+    #s.write("G92 X0 Y0 Z0\n")
     #s.readline().strip()
     # Stream g-code to grbl
     #was a print here
