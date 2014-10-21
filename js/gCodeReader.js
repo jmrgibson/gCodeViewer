@@ -4,6 +4,189 @@
  * Time: 7:31 AM
  */
 
+if (!String.prototype.format) {
+    String.prototype.format = function () {
+        var args = arguments;
+        return this.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] != 'undefined'
+              ? args[number]
+              : match
+            ;
+        });
+    };
+}
+
+function getAngle(x1, y1, x2, y2) {
+    len1 = Math.sqrt(x1 * x1 + y1 * y1);
+    len2 = Math.sqrt(x2 * x2 + y2 * y2);
+
+    a1 = Math.acos(x1 / len1) * (180 / Math.PI);
+    if (y1 < 0) {
+        a1 = 360 - a1;
+    }
+
+    a2 = Math.acos(x2 / len2) * (180 / Math.PI);
+    if (y2 < 0) {
+        a2 = 360 - a2;
+    }
+
+    return [a1, a2];
+}
+
+function displayProcessor(gcode) {
+    //create new file object somehow
+    var printing = false;
+    var validLine = false;
+
+    var i = 0;
+
+    //regex for line checking
+    var reg0 = new RegExp("G0 ");
+    var reg1 = new RegExp("G1 ");
+    var reg2 = new RegExp("G[0]?2 ");
+    var reg3 = new RegExp("G[0]?3 ");
+    var rez = new RegExp('[Z]\s*([+-]|\d)');
+    var rey = new RegExp('[Y]\s*([+-]|\d)');
+    var rex = new RegExp('[X]\s*([+-]|\d)');
+    var rezzero = new RegExp('[Z]\s*0\.0+');
+    var rezup = new RegExp('[Z]\s*[+]?\d*\.\d*');
+    var rezdown = new RegExp('[Z]\s*[-]\d*\.\d*');
+
+    for (i = 0; i < gcode.length; i++) {
+        var line = gcode(i);
+        validLine = false;
+        g0 = line.match(reg0);
+        g1 = line.match(reg1);
+        g2 = line.match(reg2);
+        g3 = line.match(reg3);
+        z = line.match(rez);
+        y = line.match(rey);
+        x = line.match(rex);
+        zzero = line.match(rezzero);
+        zup = line.match(rezup);
+        zdown = line.match(rezdown);
+
+        //check if we are meant to be printing or not
+        if ((zdown != null) || (zzero != null)) {
+            printing = true;
+        } else if (zup != null) {
+            printing = false;
+        }
+
+        //check and replace arcs
+        if ((g2 != null) || (g3 != null)) {
+            //remove whitepsace
+            line(i) = line.replace(/\s+/g, '');
+
+            var rexv = new RegExp('X[+-]?\d*\.\d*');
+            var reyv = new RegExp('Y[+-]?\d*\.\d*');
+            var reiv = new RegExp('I[+-]?\d*\.\d*');
+            var rejv = new RegExp('J[+-]?\d*\.\d*');
+
+            var xv = line.match(rexv);
+            var yv = line.match(reyv);
+            var iv = line.match(reiv);
+            var jv = line.match(rejv);
+
+            //extract the x, y, i, j values from the line
+            var arcx = Number(xv.slice(1));
+            var arcy = Number(yv.slice(1));
+            var arci = Number(iv.slice(1));
+            var arcj = Number(jv.slice(1));
+
+            //calculate geomertric variables
+            var xcenter = xcurrent + arci;
+            var ycenter = ycurrent + arcj;
+            var radius = Math.sqrt(arci * arci + arcj + arcj);
+
+            var angles = getAngle(-arci, -arcj, (arcx - arci), (arcy - arcj));
+            var a1 = angles(0);
+            var a2 = angles(1);
+            var a = a2 - a1;
+
+            //handle correct lengths for arcs in different directions
+            if (((a > 180) && (a > 0)) && (g2 != null)) {
+                a = a + 180;
+            } else if (((a < 0) && (a > -180)) && (gg != null)) {
+                a = a - 180;
+            } else if ((a > 180) && (g2 != null)) {
+                a = a - 180;
+            } else if ((a < -180) && (g3 != null)) {
+                a = a + 180;
+            }
+
+            var numsteps = 25;
+            var anglelist = [];
+            var offsetanglelist = [];
+            var points = [];
+
+            //populate list of angles of the points
+            if (g3 != null) {
+                for (var i = 0; i < numsteps + 1; i++) {
+                    anglelist.append(i * (Math.abs(a) / numsteps));
+                }
+                for (var i = 0; i < numsteps + 1; i++) {
+                    offsetanglelist.append(anglelist(i) + a1);
+                }
+            } else if (g2 != null) {
+                for (var i = 0; i < numsteps + 1; i++) {
+                    anglelist.append(-i * (Math.abs(a) / numsteps));
+                }
+                for (var i = 0; i < numsteps + 1; i++) {
+                    offsetanglelist.append(anglelist(i) + a1);
+                }
+            }
+
+            //work out co-ordinates of points along the arc
+            for (var i = 0; i < offsetanglelist.length; i++) {
+                points.append([radius * Math.cos((Math.PI / 180) * offsetanglelist(i)), radius * Math.sin((Math.PI / 180) * offsetanglelist(i))]);
+            }
+
+            //format and output
+            for (var i = 0; i < points.length; i++) {
+                "G1 X{0} Y{1}".format(points(i)(0).toFixed(3), points(i)(1).toFixed(3));
+            }
+
+        }
+
+        //normal moves
+        if ((g1 != null) && (g0 != null)) {
+            //remove whitespace
+            var line = line.replace(/\s+/g, '');
+            var newline = 'G1 ';
+
+            //remove whitespace between x ### etc. Also update current position
+            if (x != null) {
+                validLine = true;
+                var rexp = new RegExp = 'X[+-]?\d*\.\d*';
+                xp = line.match(rexp);
+                xcurrent = xp.slice(1);
+                newline = newline + xp + ' ';
+            }
+
+            if (y != null) {
+                validLine = true;
+                var reyp = new RegExp = 'Y[+-]?\d*\.\d*';
+                yp = line.match(reyp);
+                ycurrent = yp.slice(1);
+                newline = newline + yp + ' ';
+            }
+
+            //add extrude if printing (shows in black)
+            if (printing) {
+                newline = newline.strip() + ' E2.5\n';
+            } else {
+                newline = newline.strip() + '\n';
+            }
+        }
+
+        if (validLine) {
+            //write to file object somehow?
+            newgcode.write(newline);
+        }
+    }
+}
+
 GCODE.gCodeReader = (function(){
 // ***** PRIVATE ******
     var gcode, lines;
@@ -181,149 +364,6 @@ GCODE.gCodeReader = (function(){
 
     }
 
-    var getAngle = function (x1, y1, x2, y2) {
-        len1 = Math.sqrt(x1 * x1 + y1 * y1);
-        len2 = Math.sqrt(x2 * x2 + y2 * y2);
-
-        a1 = Math.acos(x1 / len1) * (180 / Math.PI);
-        if (y1 < 0) {
-            a1 = 360 - a1;
-        }
-
-        a2 = Math.acos(x2 / len2) * (180 / Math.PI);
-        if (y2 < 0) {
-            a2 = 360 - a2;
-        }
-
-        return [a1, a2]
-    }
-
-    var displayProcessor = function (gcode) {
-        //create new file object somehow
-        var printing = false;
-        var validLine = false;
-
-        var i = 0;
-
-        var reg0 = new RegExp("G0 ");
-        var reg1 = new RegExp("G1 ");
-        var reg2 = new RegExp("G[0]?2 ");
-        var reg3 = new RegExp("G[0]?3 ");
-        var rez = new RegExp('[Z]\s*([+-]|\d)');
-        var rey = new RegExp('[Y]\s*([+-]|\d)');
-        var rex = new RegExp('[X]\s*([+-]|\d)');
-        var rezzero = new RegExp('[Z]\s*0\.0+');
-        var rezup = new RegExp('[Z]\s*[+]?\d*\.\d*');
-        var rezdown = new RegExp('[Z]\s*[-]\d*\.\d*');
-
-        for (i = 0; i < gcode.length; i++) {
-            var line = gcode(i);
-            validLine = false;
-            g0 = line.match(reg0);
-            g1 = line.match(reg1);
-            g2 = line.match(reg2);
-            g3 = line.match(reg3);
-            z = line.match(rez);
-            y = line.match(rey);
-            x = line.match(rex);
-            zzero = line.match(rezzero);
-            zup = line.match(rezup);
-            zdown = line.match(rezdown);
-        }
-
-        if ((zdown != null) || (zzero){
-            printing = true;
-        } else if (zup != null) {
-            printing = false;
-        }
-
-        if ((g2 != null) || (g3 != null)) {
-            line(i) = line.replace(/\s+/g, '');
-        
-
-            var rexv = new RegExp('X[+-]?\d*\.\d*');
-            var reyv = new RegExp('Y[+-]?\d*\.\d*');
-            var reiv = new RegExp('I[+-]?\d*\.\d*');
-            var rejv = new RegExp('J[+-]?\d*\.\d*');
-
-            var xv = line.match(rexv);
-            var yv = line.match(reyv);
-            var iv = line.match(reiv);
-            var jv = line.match(rejv);
-
-            var arcx = Number(xv.slice(1));
-            var arcy = Number(yv.slice(1));
-            var arci = Number(iv.slice(1));
-            var arcj = Number(jv.slice(1));
-
-            var xcenter = xcurrent + arci;
-            var ycenter = ycurrent + arcj;
-            var radius = Math.sqrt(arci*arci + arcj + arcj);
-
-            var angles = getAngle(-arci, -arcj, (arcx-arci), (arcy-arcj));
-            var a1 = angles(0);
-            var a2 = angles(1);
-            var a = a2- a1;
-
-            if (((a > 180) && (a > 0)) && (g2 != null)){
-                a = a + 180;
-            } else if (((a < 0) && (a > -180)) && (gg != null)){
-                a = a - 180;
-            } else if ((a > 180) && (g2 != null)) {
-                a = a - 180;
-            } else if ((a < -180) && (g3 != null)) {
-                a = a + 180;
-            }
-
-            var numsteps = 50;
-            var anglelist = [];
-            var offsetanglelist = [];
-            var points = [];
-
-            if (g3 != null){
-                for (var i = 0; i < numsteps+1; i++){
-                    anglelist.append(i*(Math.abs(a)/numsteps));
-                }
-                for (var i = 0; i < numsteps+1; i++){
-                    offsetanglelist.append(anglelist(i) + a1);
-                }
-            } else if (g2 != null) {
-                for (var i = 0; i < numsteps+1; i++){
-                    anglelist.append(-i*(Math.abs(a)/numsteps));
-                }
-                for (var i = 0; i < numsteps+1; i++){
-                    offsetanglelist.append(anglelist(i) + a1);
-                }
-            }
-
-            for (var i = 0; i < offsetanglelist.length; i++){
-                points.append([radius * Math.cos((Math.PI/180)*offsetanglelist(i)), radius * Math.sin((Math.PI/180)*offsetanglelist(i))]);
-            }
-
-            for (var i=0; i < points.length; i++){
-                points(i)(0).toFixed(3);
-            }
-
-        }
-        
-        if ((g1 != null) && (g2 != null)) {
-            if (x != null){
-                validLine = true;
-            }
-
-            if (y != null){
-                validLine = true;
-            }
-
-            if (printing) {
-                line = line.strip() + ' E2.5\n';
-            }
-        }
-
-        if (validLine){
-            newgcode.write(line.strip() + '\n');
-        }
-    }
 
 // ***** PUBLIC *******
     return {
@@ -333,7 +373,10 @@ GCODE.gCodeReader = (function(){
             model = [];
             z_heights = [];
             detectSlicer(reader.target.result);
+
             console.log(reader.target.result);
+            //displayProcessor(reader.target.result);
+
             lines = reader.target.result.split(/\n/);
             reader.target.result = null;
 //            prepareGCode();
