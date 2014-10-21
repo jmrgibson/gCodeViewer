@@ -16,16 +16,22 @@ if (!String.prototype.format) {
     };
 }
 
-function getAngle(x1, y1, x2, y2) {
-    len1 = Math.sqrt(x1 * x1 + y1 * y1);
-    len2 = Math.sqrt(x2 * x2 + y2 * y2);
+if (typeof (String.prototype.trim) === "undefined") {
+    String.prototype.trim = function () {
+        return String(this).replace(/^\s+|\s+$/g, '');
+    };
+}
 
-    a1 = Math.acos(x1 / len1) * (180 / Math.PI);
+function getAngle(x1, y1, x2, y2) {
+    var len1 = Math.sqrt(x1 * x1 + y1 * y1);
+    var len2 = Math.sqrt(x2 * x2 + y2 * y2);
+
+    var a1 = Math.acos(x1 / len1) * (180 / Math.PI);
     if (y1 < 0) {
         a1 = 360 - a1;
     }
 
-    a2 = Math.acos(x2 / len2) * (180 / Math.PI);
+    var a2 = Math.acos(x2 / len2) * (180 / Math.PI);
     if (y2 < 0) {
         a2 = 360 - a2;
     }
@@ -49,12 +55,12 @@ function displayProcessor(gcode) {
     var yfinal = 0.0;
 
     //preamble (absolute coords, relative extrusion, millimeters)
-    newgcode.push('G21\n')
-    //newgcode.push('G1 Z5 F5000\n')
-    newgcode.push('G90\n')
-    newgcode.push('M83\n')
-    newgcode.push('G92 X0 Y0 Z0\n')
-    newgcode.push('G92 E0\n')
+    newgcode.push('G21')
+    //newgcode.push('G1 Z5 F5000')
+    newgcode.push('G90')
+    newgcode.push('M83')
+    newgcode.push('G92 X0 Y0 Z0')
+    newgcode.push('G92 E0')
 
     
 
@@ -63,30 +69,30 @@ function displayProcessor(gcode) {
     var reg1 = new RegExp("G1 ");
     var reg2 = new RegExp("G[0]?2 ");
     var reg3 = new RegExp("G[0]?3 ");
-    var rez = new RegExp('[Z]\s*([+-]|\d)');
-    var rey = new RegExp('[Y]\s*([+-]|\d)');
-    var rex = new RegExp('[X]\s*([+-]|\d)');
-    var rezzero = new RegExp('[Z]\s*0\.0+');
-    var rezup = new RegExp('[Z]\s*[+]?\d*\.\d*');
-    var rezdown = new RegExp('[Z]\s*[-]\d*\.\d*');
-
-
+    var rez = new RegExp("[Z]\\s*([+-]|\\d)");
+    var rey = new RegExp("[Y]\\s*([+-]|\\d)");
+    var rex = new RegExp("[X]\\s*([+-]|\\d)");
+    //var rey = new RegExp("[Y]\s*(-|\d)");
+    //var rex = new RegExp("[X]\s*(-|\d)");
+    var rezzero = new RegExp("[Z]\\s*0\\.0+");
+    var rezup = new RegExp("[Z]\\s*[+]?\\d*\\.\\d*");
+    var rezdown = new RegExp("[Z]\\s*[-]\\d*\\.\\d*");
 
     for (var i = 0; i < gcode.length; i++) {
         var line = gcode[i];
         validLine = false;
-        g0 = line.match(reg0);
-        g1 = line.match(reg1);
-        g2 = line.match(reg2);
-        g3 = line.match(reg3);
-        z = line.match(rez);
-        y = line.match(rey);
-        x = line.match(rex);
-        zzero = line.match(rezzero);
-        zup = line.match(rezup);
-        zdown = line.match(rezdown);
 
-
+        //shitty javascript regex needs \\ escapes
+        var g0 = reg0.exec(line);
+        var g1 = reg1.exec(line);
+        var g2 = reg2.exec(line);
+        var g3 = reg3.exec(line);
+        var z = rez.exec(line);
+        var y = rey.exec(line);
+        var x = rex.exec(line);
+        var zzero = rezzero.exec(line);
+        var zup = rezup.exec(line);
+        var zdown = rezdown.exec(line);
 
         //check if we are meant to be printing or not
         if ((zdown != null) || (zzero != null)) {
@@ -95,29 +101,26 @@ function displayProcessor(gcode) {
             printing = false;
         }
 
-
-
-
         //check and replace arcs
         if ((g2 != null) || (g3 != null)) {
             //remove whitepsace
             line = line.replace(/\s+/g, '');
 
-            var rexv = new RegExp('X[+-]?\d*\.\d*');
-            var reyv = new RegExp('Y[+-]?\d*\.\d*');
-            var reiv = new RegExp('I[+-]?\d*\.\d*');
-            var rejv = new RegExp('J[+-]?\d*\.\d*');
+            var rexv = new RegExp('X[+-]?\\d*\\.\\d*');
+            var reyv = new RegExp('Y[+-]?\\d*\\.\\d*');
+            var reiv = new RegExp('I[+-]?\\d*\\.\\d*');
+            var rejv = new RegExp('J[+-]?\\d*\\.\\d*');
 
-            var xv = line.match(rexv);
-            var yv = line.match(reyv);
-            var iv = line.match(reiv);
-            var jv = line.match(rejv);
-
+            var xv = rexv.exec(line);
+            var yv = reyv.exec(line);
+            var iv = reiv.exec(line);
+            var jv = rejv.exec(line);
+            
             //extract the x, y, i, j values from the line
-            var arcx = Number(xv.slice(1));
-            var arcy = Number(yv.slice(1));
-            var arci = Number(iv.slice(1));
-            var arcj = Number(jv.slice(1));
+            var arcx = Number(xv[0].slice(1));
+            var arcy = Number(yv[0].slice(1));
+            var arci = Number(iv[0].slice(1));
+            var arcj = Number(jv[0].slice(1));
 
             //calculate geomertric variables
             var xcenter = xcurrent + arci;
@@ -128,7 +131,6 @@ function displayProcessor(gcode) {
             var a1 = angles[0];
             var a2 = angles[1];
             var a = a2 - a1;
-
 
             //handle correct lengths for arcs in different directions
             if (((a > 180) && (a > 0)) && (g2 != null)) {
@@ -145,7 +147,6 @@ function displayProcessor(gcode) {
             var anglelist = [];
             var offsetanglelist = [];
             var points = [];
-
 
             //populate list of angles of the points
             if (g3 != null) {
@@ -180,36 +181,33 @@ function displayProcessor(gcode) {
 
 
         //normal moves
-        if ((g1 != null) && (g0 != null)) {
-            //remove whitespace
+        if ((g1 != null) || (g0 != null)) {
+            //remove all whitespace
             var line = line.replace(/\s+/g, '');
+
             var newline = 'G1 ';
-
-
             //remove whitespace between x ### etc. Also update current position
             if (x != null) {
                 validLine = true;
-                var rexp = new RegExp('X[+-]?\d*\.\d*');
-                var xp = line.match(rexp);
-                xcurrent = Number(xp.slice(1));
+                var rexp = new RegExp('X[+-]?\\d*\\.\\d*');
+                var xp = rexp.exec(line);
+                xcurrent = Number(xp[0].slice(1));
                 newline = newline + xp + ' ';
             }
 
-        
-
             if (y != null) {
                 validLine = true;
-                var reyp = new RegExp('Y[+-]?\d*\.\d*');
-                var yp = line.match(reyp);
-                ycurrent = Number(yp.slice(1));
+                var reyp = new RegExp('Y[+-]?\\d*\\.\\d*');
+                var yp = reyp.exec(line);
+                ycurrent = Number(yp[0].slice(1));
                 newline = newline + yp + ' ';
             }
 
             //add extrude if printing (shows in black)
             if (printing) {
-                newline = newline.strip() + ' E2.5\n';
+                newline = newline.trim() + ' E2.5';
             } else {
-                newline = newline.strip() + '\n';
+                newline = newline.trim();
             }
 
         }
@@ -409,25 +407,24 @@ GCODE.gCodeReader = (function(){
             model = [];
             z_heights = [];
             detectSlicer(reader.target.result);
-
-            console.log(reader.target.result);
-            //displayProcessor(reader.target.result);
-
             lines = reader.target.result.split(/\n/);
             reader.target.result = null;
-//            prepareGCode();
 
-            GCODE.ui.worker.postMessage({
-                    "cmd":"parseGCode",
-                    "msg":{
-                        gcode: lines,
-                        options: {
-                            firstReport: 5
-                        }
-                    }
-                }
-            );
-            delete lines;
+            console.log(lines);
+            var newlines = displayProcessor(lines);
+            console.log(newlines);
+
+            //GCODE.ui.worker.postMessage({
+            //        "cmd":"parseGCode",
+            //        "msg":{
+            //            gcode: newlines,
+            //            options: {
+            //                firstReport: 5
+            //            }
+            //        }
+            //    }
+            //);
+            //delete lines;
 
 
 
