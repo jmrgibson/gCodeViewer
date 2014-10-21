@@ -323,7 +323,8 @@ GCODE.ui = (function(){
                 chooseAccordion('progressAccordionTab');
                 setProgress('loadProgress', 0);
                 setProgress('analyzeProgress', 0);
-//                myCodeMirror.setValue(theFile.target.result);
+                //                myCodeMirror.setValue(theFile.target.result);
+                console.log('got here loading!');
                 GCODE.gCodeReader.loadFile(theFile);
                 if(showGCode){
                     myCodeMirror.setValue(theFile.target.result);
