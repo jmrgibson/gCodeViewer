@@ -171,6 +171,12 @@
             margin-right: auto;
         }
 
+        #layerscroll {
+            position: fixed;
+            top: 50px;
+            left: 600px;
+        }
+
 
     </style>
     <div id="controlPane">
@@ -224,10 +230,10 @@
         <div class="navbar navbar-default navbar-fixed-top" role="navigation">
             <div class="container-fluid">
                 <ul class="nav navbar-nav" id="tab-nav">
-                    <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About Preview</a></li>
+                    <li class="active"><a href="#tabAbout" data-toggle="tab"><i class="fa fa-info-circle"></i> About</a></li>
                     <li><a href="#tab2d" data-toggle="tab"><i class="fa fa-arrows"></i> 2D Preview</a></li>
                     <li><a href="#tabGCode" data-toggle="tab"><i class="fa fa-code"></i> GCode Viewer</a></li>
-                    <!--<li class="gcode-init">
+                    <li class="gcode-init">
                         <input type="file" id="file" name="files" style="display: none;" />
                         <div class="gcode-drop" id="drop_zone">
                             <i class="fa fa-upload"></i> Drag File here
@@ -240,7 +246,7 @@
                                 <div id="analyzeProgress" class="progress-bar" role="progressbar" style="width: 0;"></div>
                             </div>
                         </div>
-                    </li>-->
+                    </li>
                 </ul>
 
                 <ul class="nav navbar-nav navbar-right">
@@ -264,7 +270,7 @@
                         </div>
                         <div id="errorAnalysisAccordioinTab" class="panel-collapse collapse in">
                             <div class="panel-body">
-                                <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()" />Run analysis</button>
+                                <button class="btn disabled" id="runAnalysisButton" onclick="GCODE.analyzer.runAnalyze()"/>Run analysis</button>
                                 <div id="analysisOptionsDiv" class="hide">
                                     <label for="renderErrors"><input type="checkbox" id="renderErrors" onclick="GCODE.ui.processOptions()">Render error analysis results</label>
                                 </div>
@@ -279,25 +285,6 @@
             <div id="gcode">
                 <div id="tabs-min" class="tabbable">
                     <div class="tab-content">
-                        <div class="tab-pane" id="tabControl">
-                            <div id="lefthandcontrol">
-                                <div id="mancontroldiv" onload="initSettings()">
- 
-                                </div>
-                            </div>
-                            <div id="righthandcontrol">
-
-                                <div id="settingsdiv"></div>
-                                <ul>
-                                    <li class="gcode-init">
-                                        <input type="file" id="file" name="files" style="display: none;" />
-                                        <div class="gcode-drop" id="drop_zone">
-                                            <i class="fa fa-upload"></i> Drag File here
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
                         <div class="tab-pane" id="tab2d">
                             <div class="toolbar toolbar-right" id="layer-info" style="display: none;">
                                 <div class="panel panel-default">
@@ -320,7 +307,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="scrollbar">
+<!--                         <div class="scrollbar" id="layerscroll">
                                 <div class="scrollbar-group">
                                     <span class="scrollbar-plus"><i class="fa fa-arrow-up"></i></span>
                                     <div class="scrollbar-control">
@@ -328,25 +315,19 @@
                                     </div>
                                     <span class="scrollbar-minus"><i class="fa fa-arrow-down"></i></span>
                                 </div>
-                            </div>
+                            </div>-->
                             <canvas id="canvas"></canvas>
                         </div>
-
                         <div class="tab-pane" id="tabGCode">
                             <div id="gCodeContainer"></div>
                         </div>
                         <div class="tab-pane active" id="tabAbout">
                             <div class="container">
-                                <h1 class="logo"><img src="img/logo.png" alt="2D Polymer Printer Interface" /></h1>
-                                <b>2D Polymer Printer</b> is a liquid printer primarly designed for printing liquid polymers for tactile sensors and other research projects. This page represents the interface
-                                that allows you to manually control the printer, upload a file to print, change settings and preview the print job.
-                                It should work in any modern browser (Chrome, FF, safari 6, Opera, IE10 should work).<br /><br />
+                                <h1 class="logo"><img src="img/logo.png" alt="GCode Viewer" /></h1>
+                                <b>gCodeViewer</b> is a visual GCode visualizer, viewer and analyzer in your own browser! It works on any OS in almost any modern browser (chrome, ff, safari 6, opera, ie10 should work too). All you need to do - is drag your *.gcode file to the designated zone.<br /><br />
                                 Current features include:<br />
                                 <ul>
-                                    <li>.DXF file processing</li>
-                                    <ul>Upload files created in EagleCAD, CREO, Solidworks, Adobe Illustrator </ul>
-                                    <li>
-                                        Visualize GCode in 2D, layer by layer
+                                    <li>Visualize GCode in 2D, layer by layer
                                         <ul>
                                             <li>Show retracts and restarts</li>
                                             <li>Show print/move/retract speeds</li>
@@ -356,19 +337,21 @@
                                             <li><b>Gcode viewer will try to parse nozzle and filament diameters from gcode, but it may fail to do so. In that case you will need to set it manually in 'Printer Info' tab</b></li>
                                         </ul>
                                     </li>
-                                    <li>
-                                        Analyze GCode
+                                    <li>Analyze GCode
                                         <ul>
                                             <li>Print time, amount of plastic used, layer height, etc. for whole file and for single layer</li>
                                             <li>Reference visualized part to GCode file (i.e. select a certain part of 2d visualization, switch to GCode view - it will highlight list of lines responsible for visualized piece)</li>
                                         </ul>
                                     </li>
                                     <li>Multiplatform, available online (but works offline too), works locally (doesn't upload you g-code anywhere or download anything but application itself)</li>
-                                    <li>Only supports modern browsers</li>
+                                    <li>3D visualization (I don't know what for, it's dull and useless.. need to rewrite it from scratch)</li>
+                                    <li>And yeah, it's slow, memory hungry and only supports modern browsers</li>
                                     <li>Totally open source so you can use it as you like</li>
                                 </ul>
                                 <br /><br />
-                                All sources, CAD files and documentation is available at <a href="https://github.com/jmr.gibson/gCodeViewer">https://github.com/jmr.gibson/gCodeViewer</a><br />
+                                All sources are available at <a href="https://github.com/hudbrog/gCodeViewer">https://github.com/hudbrog/gCodeViewer</a><br />
+                                If you find any bugs or have feature requests - don't hesitate to post them to <a href="https://github.com/hudbrog/gCodeViewer/issues">https://github.com/hudbrog/gCodeViewer/issues</a><br />
+                                And I would appreciate if you like it on Thingiverse page: <a href="http://www.thingiverse.com/thing:35248">http://www.thingiverse.com/thing:35248</a><br />
                             </div>
 
                         </div>
