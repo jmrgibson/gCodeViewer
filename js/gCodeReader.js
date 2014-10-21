@@ -34,11 +34,29 @@ function getAngle(x1, y1, x2, y2) {
 }
 
 function displayProcessor(gcode) {
-    //create new file object somehow
+    //now is lines, not file object
+
+    var newgcode = [];
     var printing = false;
     var validLine = false;
 
     var i = 0;
+    var xcurrent = 0.0;
+    var ycurrent = 0.0;
+    var xcenter= 0.0;
+    var ycenter = 0.0;
+    var xfinal = 0.0;
+    var yfinal = 0.0;
+
+    //preamble (absolute coords, relative extrusion, millimeters)
+    newgcode.push('G21\n')
+    //newgcode.push('G1 Z5 F5000\n')
+    newgcode.push('G90\n')
+    newgcode.push('M83\n')
+    newgcode.push('G92 X0 Y0 Z0\n')
+    newgcode.push('G92 E0\n')
+
+    
 
     //regex for line checking
     var reg0 = new RegExp("G0 ");
@@ -52,8 +70,10 @@ function displayProcessor(gcode) {
     var rezup = new RegExp('[Z]\s*[+]?\d*\.\d*');
     var rezdown = new RegExp('[Z]\s*[-]\d*\.\d*');
 
-    for (i = 0; i < gcode.length; i++) {
-        var line = gcode(i);
+
+
+    for (var i = 0; i < gcode.length; i++) {
+        var line = gcode[i];
         validLine = false;
         g0 = line.match(reg0);
         g1 = line.match(reg1);
@@ -66,6 +86,8 @@ function displayProcessor(gcode) {
         zup = line.match(rezup);
         zdown = line.match(rezdown);
 
+
+
         //check if we are meant to be printing or not
         if ((zdown != null) || (zzero != null)) {
             printing = true;
@@ -73,10 +95,13 @@ function displayProcessor(gcode) {
             printing = false;
         }
 
+
+
+
         //check and replace arcs
         if ((g2 != null) || (g3 != null)) {
             //remove whitepsace
-            line(i) = line.replace(/\s+/g, '');
+            line = line.replace(/\s+/g, '');
 
             var rexv = new RegExp('X[+-]?\d*\.\d*');
             var reyv = new RegExp('Y[+-]?\d*\.\d*');
@@ -100,9 +125,10 @@ function displayProcessor(gcode) {
             var radius = Math.sqrt(arci * arci + arcj + arcj);
 
             var angles = getAngle(-arci, -arcj, (arcx - arci), (arcy - arcj));
-            var a1 = angles(0);
-            var a2 = angles(1);
+            var a1 = angles[0];
+            var a2 = angles[1];
             var a = a2 - a1;
+
 
             //handle correct lengths for arcs in different directions
             if (((a > 180) && (a > 0)) && (g2 != null)) {
@@ -120,34 +146,38 @@ function displayProcessor(gcode) {
             var offsetanglelist = [];
             var points = [];
 
+
             //populate list of angles of the points
             if (g3 != null) {
                 for (var i = 0; i < numsteps + 1; i++) {
-                    anglelist.append(i * (Math.abs(a) / numsteps));
+                    anglelist.push(i * (Math.abs(a) / numsteps));
                 }
                 for (var i = 0; i < numsteps + 1; i++) {
-                    offsetanglelist.append(anglelist(i) + a1);
+                    offsetanglelist.push(anglelist[i] + a1);
                 }
             } else if (g2 != null) {
                 for (var i = 0; i < numsteps + 1; i++) {
-                    anglelist.append(-i * (Math.abs(a) / numsteps));
+                    anglelist.push(-i * (Math.abs(a) / numsteps));
                 }
                 for (var i = 0; i < numsteps + 1; i++) {
-                    offsetanglelist.append(anglelist(i) + a1);
+                    offsetanglelist.push(anglelist[i] + a1);
                 }
             }
 
             //work out co-ordinates of points along the arc
             for (var i = 0; i < offsetanglelist.length; i++) {
-                points.append([radius * Math.cos((Math.PI / 180) * offsetanglelist(i)), radius * Math.sin((Math.PI / 180) * offsetanglelist(i))]);
+                points.push([radius * Math.cos((Math.PI / 180) * offsetanglelist[i]), radius * Math.sin((Math.PI / 180) * offsetanglelist[i])]);
             }
 
             //format and output
             for (var i = 0; i < points.length; i++) {
-                "G1 X{0} Y{1}".format(points(i)(0).toFixed(3), points(i)(1).toFixed(3));
+                var arcline = "G1 X{0} Y{1}".format(points[i][0].toFixed(3), points[i][1].toFixed(3));
+                newgcode.push(arcline);
             }
 
         }
+
+
 
         //normal moves
         if ((g1 != null) && (g0 != null)) {
@@ -155,20 +185,23 @@ function displayProcessor(gcode) {
             var line = line.replace(/\s+/g, '');
             var newline = 'G1 ';
 
+
             //remove whitespace between x ### etc. Also update current position
             if (x != null) {
                 validLine = true;
-                var rexp = new RegExp = 'X[+-]?\d*\.\d*';
-                xp = line.match(rexp);
-                xcurrent = xp.slice(1);
+                var rexp = new RegExp('X[+-]?\d*\.\d*');
+                var xp = line.match(rexp);
+                xcurrent = Number(xp.slice(1));
                 newline = newline + xp + ' ';
             }
 
+        
+
             if (y != null) {
                 validLine = true;
-                var reyp = new RegExp = 'Y[+-]?\d*\.\d*';
-                yp = line.match(reyp);
-                ycurrent = yp.slice(1);
+                var reyp = new RegExp('Y[+-]?\d*\.\d*');
+                var yp = line.match(reyp);
+                ycurrent = Number(yp.slice(1));
                 newline = newline + yp + ' ';
             }
 
@@ -178,13 +211,16 @@ function displayProcessor(gcode) {
             } else {
                 newline = newline.strip() + '\n';
             }
+
         }
 
+           
         if (validLine) {
-            //write to file object somehow?
-            newgcode.write(newline);
+            newgcode.push(newline);
         }
+
     }
+    return newgcode;
 }
 
 GCODE.gCodeReader = (function(){
