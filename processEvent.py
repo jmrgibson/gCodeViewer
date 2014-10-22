@@ -174,14 +174,14 @@ def streamGcodeFile(inputFile):
                     '--safety-height 2 {3}').format(settings['traceWidth'], settings['feedRate'], settings['dropRate'], inputFile)
     
         subprocess.call(pycamCall, shell=True)
+
         
-        print "postprocessing gcode"
-        #call postprocessor!
-        
-    
-    
-    if settings['usePostProcessor']:
+    settingsFile = open('config.ini', 'r')    
+    a = settingsFile.readline()
+    settingsFile.close()
+    if a == 'true':
         postProcessGcode()
+    
     
     sendGcode('G92_X0_Y0_Z0')
             
@@ -241,8 +241,6 @@ def streamGcodeFile(inputFile):
     return "G-code streaming finished! Printer will continue operations until finished"
 
 def postProcessGcode():
-    
-    keepZAxisMovement = False
     
     #must use M4 as the direction pin is used to assert grbl control
     os.rename('printjob.gcode', 'printjob_old.gcode')
@@ -324,7 +322,7 @@ def updatePWM(inputVals):
     hold    = ' --hold='
     
     settings = shellunstringify(inputVals)
-        
+    
     mode += settings['mode']
     period += settings['period']
     duty += settings['duty']
@@ -355,6 +353,22 @@ def startGrbl(inputVals):
     #postProcessGcode()
     return streamGcodeFile(inputVals)
     
+def postProc(val):
+    if val == 'true':
+        v = 'true'
+        s = ''
+    elif val == 'false':
+        v = 'false'
+        s ='not '
+        
+    f = open('config.ini', 'r+')
+    f.truncate()
+    f.write(v + '\n')
+    
+    f.close()
+        
+    return 'printer is {0}using onboard gcode post-processor'.format(s)
+    
 def pauseGrbl(a):
     #get and save current spindle state?
     sendGcode('!') #feed hold command
@@ -367,7 +381,7 @@ def stopGrbl(a):
     sendGcode('^x')
     
 def test(inval):
-    print 'test ok: ' + inval
+    return 'test ok: ' + inval
 
 
 events = {'jog': jog,             #xp1
@@ -381,6 +395,7 @@ events = {'jog': jog,             #xp1
           'pauseGrbl': pauseGrbl,
           'stopGrbl': stopGrbl,
           'resumeGrbl': resumeGrbl,
+          'postProc': postProc,
           'test': test}
           
 

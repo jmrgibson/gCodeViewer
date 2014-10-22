@@ -9,6 +9,15 @@ var settings = {
     percentoverlap: 0
 };
 
+function sendProcessorCmd() {
+    var check = document.getElementById('postprocessorCheck');
+    if (check.checked == true) {
+        sendEvent('postProc', 'true');
+    } else if (check.checked == false) {
+        sendEvent('postProc', 'false');
+    }
+}
+
 function startUpload() {
     document.getElementById('f1_upload_process').style.visibility = 'visible';
     document.getElementById('f1_upload_form').style.visibility = 'hidden';
@@ -235,6 +244,22 @@ function updatePWM() {
         period:iperiod.value,
         duty: iduty.value
     };
+
+    if (pwmSettings.duty <= 0) {
+        pwmSettings.duty = 1;
+    }
+
+    if (pwmSettings.period <= 0) {
+        pwmSettings.period = 1;
+    }
+
+
+    if (pwmSettings.duty >= pwmSettings.period) {
+        displayDebugEcho("Warning: Duty must be less than period time. Settings not updated.");
+        return;
+    }
+
+    
 
     if (imode == 'holdcustom') {
         pwmSettings["hold"] = ihold.value;
