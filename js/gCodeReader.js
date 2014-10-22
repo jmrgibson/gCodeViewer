@@ -56,7 +56,7 @@ function displayProcessor(gcode) {
 
     //preamble (absolute coords, relative extrusion, millimeters)
     newgcode.push('G21')
-    //newgcode.push('G1 Z5 F5000')
+    newgcode.push('G1 Z5 F5000')
     newgcode.push('G90')
     newgcode.push('M83')
     newgcode.push('G92 X0 Y0 Z0')
@@ -176,6 +176,7 @@ function displayProcessor(gcode) {
                 newgcode.push(arcline);
             }
 
+            newgcode.push("");
         }
 
 
@@ -218,6 +219,7 @@ function displayProcessor(gcode) {
         }
 
     }
+    newgcode.push("");
     return newgcode;
 }
 
@@ -403,7 +405,7 @@ GCODE.gCodeReader = (function(){
     return {
 
         loadFile: function(reader){
-//            console.log("loadFile");
+            console.log("loadFile");
             model = [];
             z_heights = [];
             detectSlicer(reader.target.result);
@@ -414,17 +416,18 @@ GCODE.gCodeReader = (function(){
             var newlines = displayProcessor(lines);
             console.log(newlines);
 
-            //GCODE.ui.worker.postMessage({
-            //        "cmd":"parseGCode",
-            //        "msg":{
-            //            gcode: newlines,
-            //            options: {
-            //                firstReport: 5
-            //            }
-            //        }
-            //    }
-            //);
-            //delete lines;
+            GCODE.ui.worker.postMessage({
+                    "cmd":"parseGCode",
+                    "msg":{
+                        gcode: newlines,
+                        options: {
+                            firstReport: 5
+                        }
+                    }
+                }
+            );
+            delete lines;
+            delete newlines;
 
 
 
