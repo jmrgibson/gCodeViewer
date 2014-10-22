@@ -188,7 +188,7 @@ def streamGcodeFile(inputFile):
                 
     # Initialize
     s = serial.Serial("/dev/ttyAMA0", 9600, timeout=2)
-    f = open(inputFile, 'r')
+    f = open('upload/printjob.gcode', 'r')
     verbose = False
         
     # Wake up grbl

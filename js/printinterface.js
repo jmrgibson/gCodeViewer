@@ -253,10 +253,11 @@ function updatePWM() {
         pwmSettings.period = 1;
     }
 
-
+    displayDebugEcho(pwmSettings.duty);
+    displayDebugEcho(pwmSettings.period);
     if (pwmSettings.duty >= pwmSettings.period) {
-        displayDebugEcho("Warning: Duty must be less than period time. Settings not updated.");
-        return;
+        //displayDebugEcho("Warning: Duty must be less than period time. Settings not updated.");
+        //return;
     }
 
     
