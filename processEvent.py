@@ -9,10 +9,16 @@ import serial
 import re
 import time
 import argparse
-# import threading
+import collections
+import math
 import subprocess
 import ConfigParser
 import os
+
+class GcodeShape:
+    def __init__(self, l, w):
+        self.lines = l
+        self.wanted = w
 
 settings = {}
 
@@ -174,8 +180,8 @@ def streamGcodeFile(inputFile):
         
     
     
-    #if settings['usePostProcessor']:
-    #    postProcessGcode()
+    if settings['usePostProcessor']:
+        postProcessGcode()
     
     sendGcode('G92_X0_Y0_Z0')
             
@@ -239,33 +245,71 @@ def postProcessGcode():
     keepZAxisMovement = False
     
     #must use M4 as the direction pin is used to assert grbl control
-    os.rename('gcode.ngc', 'gcode_old.ngc')
-    oldgcode = open("gcode_old.ngc" ,'r')
-    newgcode = open("gcode.ngc", 'w+')  #w+ creates if not existing
+    os.rename('printjob.gcode', 'printjob_old.gcode')
+    oldgcode = open("printjob_old.gcode" ,'r')
+    newgcode = open("printjob.gcode", 'w+')  #w+ creates if not existing
     newgcode.truncate(0);  #clears file
     
 
-    #used to assert grbl control of printer
+    newgcode.write("G90\n")
+    newgcode.write("F80\n")
+
     newgcode.write("M4\n")
     newgcode.write("M5\n")
-
+    
+    currentShape = -1 #-1 is preable
+    shapes = collections.OrderedDict()
+    shapes[currentShape] = GcodeShape(list(), False)
+    
     for line in oldgcode:
-        if "Z" in line:
-            if keepZAxisMovement: #if we are keeping the z commands
-                newgcode.write(line)
-            ans = re.search("[+-]?[\d]*\.[\d]*", line)   #gets floating point numbers
-            try:
-                if float(ans.group(0)) > 0:    #if going up
-                    newgcode.write("M5\n") #spindle off
-                else:
-                    newgcode.write("M4\n") #spindle on
+        re_shape = re.search('SHAPE Nr: \d*', line)
+        g3 = re.search('G3', line)
+        g2 = re.search('G2', line)
+        m3 = re.search('M3', line)
+        m4 = re.search('M4', line)
+        m5 = re.search('M5', line)
+        f = re.search('F\d*', line)
+        zp = re.search('Z\d*', line)
+        i = re.search('[I]\s*[+-]?\d*.\d*', line)
+        j = re.search('[J]\s*[+-]?\d*.\d*', line)
+        
+        if f or m3 or m4 or m5:
+            continue
+                        
+        #if new shape detected
+        if re_shape:
+            currentShape = re_shape.group()[10:]
+            shapes[currentShape] = GcodeShape(list(), True)
+            shapes[currentShape].lines.append('(* ' + re_shape.group() + ' *)\n')
+        else:   #otherwise normal line
+            shapes[currentShape].lines.append(line)
+            if (g3 or g2) and i and j:  #check if contains little circle bits 
+                ival = float(i.group().strip())
+                jval = float(j.group().strip())
+                #remove all characters and whitespace to get number
+                if math.sqrt(ival ** 2 + jval ** 2) < 0.1:
+                    shapes[currentShape].wanted = False
                     
-            except ValueError:
-                print "error converting '{0}'".format(ans)
-        else:
-            newgcode.write(line)
+            
 
-    #unasserts grbl control
+
+
+   
+    for shape in shapes:
+        if shapes[shape].wanted == False:
+            continue
+        else:
+            for line in shapes[shape].lines:
+                down = re.search('Z\s*[0]', line)
+                up = re.search('Z\s*[1-9]', line)
+                if down:
+                    newgcode.write('M4\n')
+                    #continue
+                if up:
+                    newgcode.write('M3\n')
+                    #continue
+                newgcode.write(line)
+    
     newgcode.write("M3\n")        
     newgcode.write("M5\n")
             
@@ -274,10 +318,10 @@ def postProcessGcode():
 
 def updatePWM(inputVals):
     #return 'pwmupdated'
-    mode = ' --mode='
-    period = ' --period='
-    duty = ' --duty='
-    hold = ' --hold='
+    mode    = ' --mode='
+    period  = ' --period='
+    duty    = ' --duty='
+    hold    = ' --hold='
     
     settings = shellunstringify(inputVals)
         
